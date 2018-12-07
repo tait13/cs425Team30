@@ -21,7 +21,7 @@ class HomeScreen extends React.Component {
     this.state = {
       titleText: "Please choose how you would like to load an image.",
     };
-  }
+  };
 
   _cameraButton() {
     Alert.alert('You tapped the button!'); //replace with button function

@@ -89,28 +89,36 @@ class GalleryScreen extends React.Component {
         }
 
         return;
-  };
+  }
 
   render(){
-        if(this.checkedPermissions !== false)
-        {
-            this.requestExternalStoragePermission();
 
-            CameraRoll.getPhotos({
-                   first: 20,
-                   assetType: 'Photos',
-                 })
-                 .then(r =>
-                   this.setState({ photos: r.edges }))
-                 .catch((err) => {
-                    //Error Loading Images
-                    Alert.alert('Error Loading Images. Does the device have access to the necessary permissions.');
-                    console.log(err);
+        console.log(this.state.checkedPermissions);
+        try{
+            if(this.state.checkedPermissions !== true)
+            {
+                console.log(this.checkedPermissions);
+                this.requestExternalStoragePermission();
 
-                 })
-             this.checkedPermissions = true;
+                CameraRoll.getPhotos({
+                       first: 20,
+                       assetType: 'Photos',
+                     })
+                     .then(r =>
+                       this.setState({ photos: r.edges }))
+                     .catch((err) => {
+                        //Error Loading Images
+                        Alert.alert('Error Loading Images. Does the device have access to the necessary permissions.');
+                        console.log(err);
+
+                     })
+                 this.setState({checkedPermissions : true});
+            }
         }
-
+        catch (err){
+            console.warn(err);
+        }
+        console.log(this.checkedPermissions);
 
     const {navigate} = this.props.navigation;
 

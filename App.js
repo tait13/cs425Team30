@@ -1,35 +1,77 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow
- */
-
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View, Image, Button, Alert, ScrollView, CameraRoll, PermissionsAndroid} from 'react-native';
+import {
+  Platform,
+  StyleSheet,
+  Button,
+  Alert,
+  Registry,
+  Text,
+  View,
+  ScrollView,
+  CameraRoll,
+  Image,
+  PermissionsAndroid,
+  } from 'react-native';
+import { createStackNavigator, createAppContainer } from "react-navigation";
 
-const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
-  android:
-    'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
-});
+class HomeScreen extends React.Component {
+  
+  constructor(props) {
+    super(props);
+    this.state = {
+      titleText: "Please choose how you would like to load an image.",
+    };
+  };
+  
+  _cameraButton() {
+    Alert.alert('You tapped the button!'); //replace with button function
+  };
 
+  render() {
+    const {navigate} = this.props.navigation;
+    return (
+      <View style={styles.container2}>
+        
+       <Text style={styles.text1}>
+          {this.state.titleText}{'\n'}{'\n'}
+        </Text>
+        
+        <View style={styles.container1}>
+        
+          <View style={styles.buttonContainer}>
+            <Button
+              onPress={() => _cameraButton}
+              title="Camera"
+            />
+          </View>
+         
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Gallery"
+              color="#841584"
+              onPress={() => navigate('GalleryScreen')}
+              
+            />
+          </View>
+        
+        </View>
+      </View>
+    );
+  }
+}
 
-
-type Props = {};
-export default class App extends Component<Props> {
-    constructor(props){
-        super(props);
-        this.state = {
-            photos: [],
-        }
-    }
-    _handleButtonPress = () => {
-       //Checks for permissions and asks user if not already obtained
-       console.log(PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE));
-       if (PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE))
+class GalleryScreen extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      photos: [],
+    };
+  }
+  render(){
+    const {navigate} = this.props.navigation;
+    return(
+      //Alert.alert('You tapped the button!') //replace with button function
+      if (PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE))
        {
        //Loads the camera roll
         CameraRoll.getPhotos({
@@ -40,7 +82,7 @@ export default class App extends Component<Props> {
                    this.setState({ photos: r.edges }))
                  .catch((err) => {
                     //Error Loading Images
-                    Alert.alert('Error Loading Images');
+                    Alert.alert('Error Loading Images1');
                     console.log(err);
 
                  })
@@ -59,7 +101,7 @@ export default class App extends Component<Props> {
                                    this.setState({ photos: r.edges }))
                                  .catch((err) => {
                                     //Error Loading Images
-                                    Alert.alert('Error Loading Images');
+                                    Alert.alert('Error Loading Images2');
                                     console.log(err);
 
                                  })
@@ -68,88 +110,70 @@ export default class App extends Component<Props> {
             }
 
        }
-
-       };
-
-    _postTest = () => {
-        var data = new FormData();
-        data.append('imageLoc', 'serial.png');
-
-        fetch('https://cs425.alextait.net/test.php', {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'multipart/form-data',
-            },
-            body: data
-        })
-        .then((response) => {
-            console.log(data);
-            console.log(response);
-        })
-        .catch((error) => {
-            console.error(error);
-        });
-    };
-  render() {
-    return (
-      <View style={{flexDirection:'column'}}>
-
-        <View style={{flexDirection:'row'}}>
-            <Button style={{flexDirection:'row'}} onPress={this._handleButtonPress}
-               title = "Load Image"
-            />
-            <Button style={{flexDirection:'row', alignItems:'flex-end'}} onPress={this._postTest}
-               title = "Process Image"
-            />
-        </View>
-
+    //Alert.alert('You tapped the button!') //replace with button function
+    render() {
+      
+      
         <ScrollView contentContainerStyle={styles.gallery}>
-          {this.state.photos.map((p,i) => {
+          
+          {HomeScreen.state.photos.map((p,i) => {
+          
           return (
+            
             <Image
-                key={i}
-                style = {{
-                  width: 100,
-                  height: 100,
-                }}
-                source={{ uri: p.node.image.uri}}
+              
+              key={i}
+              style = {{
+                width: 100,
+                height: 100,
+              }}
+              
+              source={{ uri: p.node.image.uri}}
+            
             />
           );
-          })}
+        })}
+       
         </ScrollView>
-      </View>
-    );
+      );
+    }
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
-  button: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+const AppNavigator = createStackNavigator({
+  Home: {screen: HomeScreen},
+  //Camera: {screen: CameraScreen},
+  Gallery: {screen: GalleryScreen},
+});
 
+export default createAppContainer(AppNavigator);
+
+const styles = StyleSheet.create({
+  text1: {
+    fontSize: 24,
+    justifyContent: 'center',
+    fontWeight: 'bold',
+    alignItems: 'center',
+    marginLeft: 20,
+    marginRight: 20,
+    marginTop: 150,
+  },
+  container2: {
+    flex: 1,
+    justifyContent: 'space-between',
+    marginLeft: 20,
+    marginRight: 20,
+  },
+  container1: {
+    flex: 1,
+    justifyContent: 'center',
+
+  },
+  buttonContainer: {
+    margin: 20,
   },
   gallery: {
     flexWrap: 'wrap',
     flexDirection: 'row',
   },
 });
-

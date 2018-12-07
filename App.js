@@ -69,11 +69,8 @@ class GalleryScreen extends React.Component {
   }
   render(){
     const {navigate} = this.props.navigation;
-    return(
-      //Alert.alert('You tapped the button!') //replace with button function
-      if (PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE))
+    if (PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE))
        {
-       //Loads the camera roll
         CameraRoll.getPhotos({
                    first: 20,
                    assetType: 'Photos',
@@ -110,10 +107,8 @@ class GalleryScreen extends React.Component {
             }
 
        }
-    //Alert.alert('You tapped the button!') //replace with button function
-    render() {
-      
-      
+    return(
+         
         <ScrollView contentContainerStyle={styles.gallery}>
           
           {HomeScreen.state.photos.map((p,i) => {

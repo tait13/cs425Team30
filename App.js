@@ -11,6 +11,7 @@ import {
   CameraRoll,
   Image,
   PermissionsAndroid,
+  FlatList,
   } from 'react-native';
 import { createStackNavigator, createAppContainer } from "react-navigation";
 
@@ -25,7 +26,7 @@ class HomeScreen extends React.Component {
 
   _cameraButton() {
     Alert.alert('You tapped the button!'); //replace with button function
-  };
+  }
 
   render() {
     const {navigate} = this.props.navigation;
@@ -52,7 +53,14 @@ class HomeScreen extends React.Component {
               onPress={() => navigate('Gallery')}
 
             />
-          </View>
+            </View>
+            <View style={styles.buttonContainer}>
+                <Button
+                  title="Parse Screen"
+                  color="#841584"
+                  onPress={() => navigate('Parse')}
+                 />
+            </View>
 
         </View>
       </View>
@@ -67,10 +75,6 @@ class GalleryScreen extends React.Component {
       checkedPermissions: false,
       photos: [],
     };
-    console.log("------------------------------------------------");
-    console.log(PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE));
-    console.log("------------------------------------------------");
-
   }
   async requestExternalStoragePermission() {
         try {
@@ -149,11 +153,77 @@ class GalleryScreen extends React.Component {
     }
   }
 
+class ParseScreen extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            notParsed : true,
+            imgURI : "",
+            parsedStrings : [],
 
+        };
+    }
+
+    _post = () =>{
+        var data = new FormData();
+        data.append('imageLoc', 'serial.png');
+
+        return fetch('https://cs425.alextait.net/textRecognition.php', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'multipart/form-date',
+            },
+            body: data
+        })
+        .then((response) => response.json())
+        .then((receivedData) => {
+            console.log(this.state.notParsed);
+            console.log(receivedData.Strings.length);
+            this.setState({
+                notParsed: false,
+                parsedStrings: receivedData.Strings,
+            }, function(){});
+
+        })
+        .catch((error) => {
+            console.error(error);
+        });
+    }
+
+    render() {
+        const {navigate} = this.props.navigation;
+        if(this.state.notParsed)
+        {
+            return (
+                <View style={styles.container2} >
+
+                    <View style={styles.buttonContainer}>
+                        <Button
+                            title = "Parse Image"
+                            color = "#841584"
+                            onPress={this._post}
+                        />
+                    </View>
+                </View>
+            );
+        }
+
+        return (
+            <View style={styles.container2} >
+                <FlatList
+                    data={this.state.parsedStrings}
+                    renderItem={({item}) => <Text>{item.Word}{"\n"}Bounds:{"\n"}{item.Bounds}</Text>}
+                />
+            </View>
+        );
+    }
+}
 const AppNavigator = createStackNavigator({
   Home: {screen: HomeScreen},
   //Camera: {screen: CameraScreen},
   Gallery: {screen: GalleryScreen},
+  Parse: {screen: ParseScreen},
 });
 
 export default createAppContainer(AppNavigator);

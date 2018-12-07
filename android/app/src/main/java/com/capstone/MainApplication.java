@@ -1,4 +1,4 @@
-package com.mobileapptest;
+package com.capstone;
 
 import android.app.Application;
 

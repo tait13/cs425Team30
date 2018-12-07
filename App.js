@@ -15,14 +15,14 @@ import {
 import { createStackNavigator, createAppContainer } from "react-navigation";
 
 class HomeScreen extends React.Component {
-  
+
   constructor(props) {
     super(props);
     this.state = {
       titleText: "Please choose how you would like to load an image.",
     };
   };
-  
+
   _cameraButton() {
     Alert.alert('You tapped the button!'); //replace with button function
   };
@@ -31,29 +31,29 @@ class HomeScreen extends React.Component {
     const {navigate} = this.props.navigation;
     return (
       <View style={styles.container2}>
-        
+
        <Text style={styles.text1}>
           {this.state.titleText}{'\n'}{'\n'}
         </Text>
-        
+
         <View style={styles.container1}>
-        
+
           <View style={styles.buttonContainer}>
             <Button
               onPress={() => _cameraButton}
               title="Camera"
             />
           </View>
-         
+
           <View style={styles.buttonContainer}>
             <Button
               title="Gallery"
               color="#841584"
-              onPress={() => navigate('GalleryScreen')}
-              
+              onPress={() => navigate('Gallery')}
+
             />
           </View>
-        
+
         </View>
       </View>
     );
@@ -66,11 +66,11 @@ class GalleryScreen extends React.Component {
     this.state = {
       photos: [],
     };
-  }
-  render(){
-    const {navigate} = this.props.navigation;
+
+
     if (PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE))
        {
+
         CameraRoll.getPhotos({
                    first: 20,
                    assetType: 'Photos',
@@ -107,33 +107,37 @@ class GalleryScreen extends React.Component {
             }
 
        }
+
+   };
+  render(){
+    const {navigate} = this.props.navigation;
+
     return(
-         
         <ScrollView contentContainerStyle={styles.gallery}>
-          
-          {HomeScreen.state.photos.map((p,i) => {
-          
+
+          {this.state.photos.map((p,i) => {
+
           return (
-            
+
             <Image
-              
+
               key={i}
               style = {{
                 width: 100,
                 height: 100,
               }}
-              
+
               source={{ uri: p.node.image.uri}}
-            
+
             />
           );
         })}
-       
+
         </ScrollView>
       );
     }
   }
-}
+
 
 const AppNavigator = createStackNavigator({
   Home: {screen: HomeScreen},

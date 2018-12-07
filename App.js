@@ -70,7 +70,6 @@ export default class App extends Component<Props> {
        }
 
        };
-
     _postTest = () => {
         var data = new FormData();
         data.append('imageLoc', 'serial.png');
@@ -100,7 +99,7 @@ export default class App extends Component<Props> {
                title = "Load Image"
             />
             <Button style={{flexDirection:'row', alignItems:'flex-end'}} onPress={this._postTest}
-               title = "Process Image"
+               title = "POST Test"
             />
         </View>
 

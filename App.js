@@ -111,7 +111,9 @@ class GalleryScreen extends React.Component {
              this.checkedPermissions = true;
         }
 
+
     const {navigate} = this.props.navigation;
+
 
     return(
         <ScrollView contentContainerStyle={styles.gallery}>

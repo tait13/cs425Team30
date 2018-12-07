@@ -64,14 +64,39 @@ class GalleryScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      checkedPermissions: false,
       photos: [],
     };
+    console.log("------------------------------------------------");
+    console.log(PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE));
+    console.log("------------------------------------------------");
 
+  }
+  async requestExternalStoragePermission() {
+        try {
+            const granted = PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+                 {'title': 'Requesting Camera Roll Access.','message': 'TEST'});
 
-    if (PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE))
-       {
+                if(granted === PermissionsAndroid.RESULTS.GRANTED){
 
-        CameraRoll.getPhotos({
+                } else {
+                    Alert.alert('Did Not Grant Permission To Access Camera Roll.')
+                }
+
+           }
+        catch (err){
+            console.warn(err);
+        }
+
+        return;
+  };
+
+  render(){
+        if(this.checkedPermissions !== false)
+        {
+            this.requestExternalStoragePermission();
+
+            CameraRoll.getPhotos({
                    first: 20,
                    assetType: 'Photos',
                  })
@@ -79,37 +104,13 @@ class GalleryScreen extends React.Component {
                    this.setState({ photos: r.edges }))
                  .catch((err) => {
                     //Error Loading Images
-                    Alert.alert('Error Loading Images1');
+                    Alert.alert('Error Loading Images. Does the device have access to the necessary permissions.');
                     console.log(err);
 
                  })
-       }
+             this.checkedPermissions = true;
+        }
 
-       else {
-            const granted = PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-             {'title': 'Requesting Camera Roll Access.','message': 'TEST'});
-
-            if(granted === PermissionsAndroid.RESULTS.GRANTED){
-                CameraRoll.getPhotos({
-                                   first: 20,
-                                   assetType: 'Photos',
-                                 })
-                                 .then(r =>
-                                   this.setState({ photos: r.edges }))
-                                 .catch((err) => {
-                                    //Error Loading Images
-                                    Alert.alert('Error Loading Images2');
-                                    console.log(err);
-
-                                 })
-            } else {
-                Alert.alert('Did Not Grant Permission To Access Camera Roll.')
-            }
-
-       }
-
-   };
-  render(){
     const {navigate} = this.props.navigation;
 
     return(

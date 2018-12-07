@@ -100,7 +100,7 @@ export default class App extends Component<Props> {
                title = "Load Image"
             />
             <Button style={{flexDirection:'row', alignItems:'flex-end'}} onPress={this._postTest}
-               title = "Process Image"
+               title = "Process Image Test"
             />
         </View>
 

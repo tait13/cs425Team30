@@ -1,6 +1,7 @@
 Development Environment setup:
 
 Dependencies Needed:
+
 React-native:
 https://facebook.github.io/react-native/docs/getting-started Under Building Projects with Native Code
 

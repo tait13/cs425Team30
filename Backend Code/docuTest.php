@@ -32,9 +32,9 @@
         $imageAnnotator = new ImageAnnotatorClient($config);
         
         #annotate the image
-        $response = $imageAnnotator->textDetection($path);
-
-        $texts = $response->getTextAnnotations();
+        $response = $imageAnnotator->documentTextDetection($path);
+        
+        $annotation = $response->getFullTextAnnotation();
 
         // printf('%d texts found:' . PHP_EOL, count($texts));
         
@@ -42,26 +42,39 @@
         imagesetthickness ( $im, 10 );
         $output = '{ "Strings": [';
         
-        
-        foreach($texts as $text)
+        foreach($annotation->getPages() as $page)
         {
-            $output = $output . '{"Word": "' . ($text->getDescription()) . '",';
-            $output = str_replace("\n", " ", $output);
-            
-            # get bounds
-            $vertices = $text->getBoundingPoly()->getVertices();
-            $bounds = [];
-            $xverts = [];
-            $yverts = [];
-            foreach ($vertices as $vertex)
+            foreach($page->getBlocks() as $block)
             {
-                $bounds[] = sprintf('(%d,%d)', $vertex->getX(), $vertex->getY());
-                $xverts[] = $vertex->getX();
-                $yverts[] = $vertex->getY();
+                foreach($block->getParagraphs() as $paragraph)
+                {
+                    foreach($paragraph->getWords() as $word)
+                    {
+                        $wordText = '';
+                        foreach($word->getSymbols() as $symbol)
+                        {
+                            $wordText .= $symbol->getText();
+                        }
+                        $output = $output . '{"Word": "' . ($wordText) . '",';
+                        $output = str_replace("\n", " ", $output);
+                        
+                        # get bounds
+                        $vertices = $word->getBoundingBox()->getVertices();
+                        $bounds = [];
+                        $xverts = [];
+                        $yverts = [];
+                        foreach ($vertices as $vertex)
+                        {
+                            $bounds[] = sprintf('(%d,%d)', $vertex->getX(), $vertex->getY());
+                            $xverts[] = $vertex->getX();
+                            $yverts[] = $vertex->getY();
+                        }
+                        
+                        $output = $output . ('"Bounds": "' . join(', ', $bounds) . '"},');
+                        imagerectangle($im,$xverts[0],$yverts[0],$xverts[2],$yverts[2], $yellow);
+                    }
+                }
             }
-            
-            $output = $output . ('"Bounds": "' . join(', ', $bounds) . '"},');
-            imagerectangle($im,$xverts[0],$yverts[0],$xverts[2],$yverts[2], $yellow);
         }
          $savePath = 'serialBoxed.png';
         $output = rtrim($output, ',');

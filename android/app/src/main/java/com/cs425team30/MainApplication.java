@@ -1,4 +1,4 @@
-package com.capstone;
+package com.cs425team30;
 
 import android.app.Application;
 

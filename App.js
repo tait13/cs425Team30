@@ -12,6 +12,7 @@ import {
   Image,
   PermissionsAndroid,
   FlatList,
+  Dimensions,
   } from 'react-native';
 import { createStackNavigator, createAppContainer } from "react-navigation";
 
@@ -158,7 +159,7 @@ class ParseScreen extends React.Component {
         super(props);
         this.state = {
             notParsed : true,
-            imgURI : "",
+            uri : '',
             parsedStrings : [],
 
         };
@@ -168,7 +169,7 @@ class ParseScreen extends React.Component {
         var data = new FormData();
         data.append('imageLoc', 'serial.png');
 
-        return fetch('https://cs425.alextait.net/textRecognition.php', {
+        return fetch('https://cs425.alextait.net/docuTest.php', {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
@@ -183,8 +184,9 @@ class ParseScreen extends React.Component {
             this.setState({
                 notParsed: false,
                 parsedStrings: receivedData.Strings,
+                uri: receivedData.imageURL,
             }, function(){});
-
+            console.log(this.state.uri);
         })
         .catch((error) => {
             console.error(error);
@@ -208,13 +210,18 @@ class ParseScreen extends React.Component {
                 </View>
             );
         }
-
         return (
-            <View style={styles.container2} >
-                <FlatList
-                    data={this.state.parsedStrings}
-                    renderItem={({item}) => <Text>{item.Word}{"\n"}Bounds:{"\n"}{item.Bounds}</Text>}
-                />
+
+            <View style={styles.container3} >
+                <View style={styles.boxedImage} >
+                    <Image source={{uri: this.state.uri}} style={{width: Dimensions.get('window').width , height:200}} />
+                </View>
+                <View style={styles.buttonContainer}>
+                    <FlatList
+                        data={this.state.parsedStrings}
+                        renderItem={({item}) => <Text>{item.Word}{"\n"}Bounds:{"\n"}{item.Bounds}</Text>}
+                    />
+                </View>
             </View>
         );
     }
@@ -244,6 +251,12 @@ const styles = StyleSheet.create({
     marginLeft: 20,
     marginRight: 20,
   },
+  container3: {
+      flex: 1,
+      justifyContent: 'space-between',
+      marginLeft: 0,
+      marginRight: 0,
+    },
   container1: {
     flex: 1,
     justifyContent: 'center',
@@ -252,6 +265,9 @@ const styles = StyleSheet.create({
   buttonContainer: {
     margin: 20,
   },
+  boxedImage: {
+      margin: 0,
+    },
   gallery: {
     flexWrap: 'wrap',
     flexDirection: 'row',

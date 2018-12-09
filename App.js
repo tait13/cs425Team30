@@ -19,7 +19,7 @@ class HomeScreen extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      titleText: "Please choose how you would like to load an image.",
+      titleText: "Please choose how you would like to load an image. boom",
     };
   }
 

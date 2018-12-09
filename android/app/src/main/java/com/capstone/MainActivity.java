@@ -4,6 +4,8 @@ import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.ReactRootView;
 import com.swmansion.gesturehandler.react.RNGestureHandlerEnabledRootView;
+import com.imagepicker.permissions.OnImagePickerPermissionsCallback; // <- add this import
+import com.facebook.react.modules.core.PermissionListener; // <- add this import
 
 public class MainActivity extends ReactActivity {
 
@@ -24,4 +26,20 @@ public class MainActivity extends ReactActivity {
      }
          };
   }
+  @Override
+  public void setPermissionListener(PermissionListener listener)
+  {
+    this.listener = listener;
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
+  {
+    if (listener != null)
+    {
+      listener.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+  }
+
 }

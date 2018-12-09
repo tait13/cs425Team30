@@ -13,19 +13,51 @@ import {
   PermissionsAndroid,
   } from 'react-native';
 import { createStackNavigator, createAppContainer } from "react-navigation";
+import ImagePicker from 'react-native-image-picker';
 
 class HomeScreen extends React.Component {
 
   constructor(props) {
     super(props);
     this.state = {
-      titleText: "Please choose how you would like to load an image. boom",
+      titleText: "Welcome!",
+      avatarSource: null,
     };
+    this.selectPhotoTapped = this.selectPhotoTapped.bind(this);
   }
 
-  _cameraButton() {
-    Alert.alert('You tapped the button!'); //replace with button function
-  };
+  selectPhotoTapped() {
+      const options = {
+        quality: 1.0,
+        maxWidth: 500,
+        maxHeight: 500,
+        storageOptions: {
+          skipBackup: true,
+        },
+      };
+
+      ImagePicker.showImagePicker(options, (response) => {
+        console.log('Response = ', response);
+
+        if (response.didCancel) {
+          console.log('User cancelled photo picker');
+        } else if (response.error) {
+          console.log('ImagePicker Error: ', response.error);
+        } else if (response.customButton) {
+          console.log('User tapped custom button: ', response.customButton);
+        } else {
+          let source = { uri: response.uri };
+
+          // You can also display the image using data:
+          // let source = { uri: 'data:image/jpeg;base64,' + response.data };
+
+          this.setState({
+            avatarSource: source,
+          });
+        }
+      });
+    }
+
 
   render() {
     const {navigate} = this.props.navigation;
@@ -38,18 +70,26 @@ class HomeScreen extends React.Component {
 
         <View style={styles.container1}>
 
-          <View style={styles.buttonContainer}>
-            <Button
-              onPress={this._cameraButton}
-              title="Camera"
-            />
-          </View>
+          
 
           <View style={styles.buttonContainer}>
             <Button
               title="Gallery"
               color="#841584"
-              onPress={() => navigate('Gallery')}
+              onPress={this.selectPhotoTapped.bind(this)}>
+              <View
+                style={[
+                  styles.avatar,
+                  styles.avatarContainer,
+                  { marginBottom: 20 },
+                ]}
+              >
+                {this.state.avatarSource === null ? (
+                  <Text>Select a Photo</Text>
+                ) : (
+                  <Image style={styles.avatar} source={this.state.avatarSource} />
+                )}
+              </View>
 
             />
           </View>
@@ -60,100 +100,100 @@ class HomeScreen extends React.Component {
   }
 }
 
-class GalleryScreen extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      checkedPermissions: false,
-      photos: [],
-    };
-    console.log("------------------------------------------------");
-    console.log(PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE));
-    console.log("------------------------------------------------");
+// class GalleryScreen extends React.Component {
+//   constructor(props) {
+//     super(props);
+//     this.state = {
+//       checkedPermissions: false,
+//       photos: [],
+//     };
+//     console.log("------------------------------------------------");
+//     console.log(PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE));
+//     console.log("------------------------------------------------");
 
-  }
-  async requestExternalStoragePermission() {
-        try {
-            const granted = PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-                 {'title': 'Requesting Camera Roll Access.','message': 'TEST'});
+//   }
+//   async requestExternalStoragePermission() {
+//         try {
+//             const granted = PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+//                  {'title': 'Requesting Camera Roll Access.','message': 'TEST'});
 
-                if(granted === PermissionsAndroid.RESULTS.GRANTED){
+//                 if(granted === PermissionsAndroid.RESULTS.GRANTED){
 
-                } else {
-                    Alert.alert('Did Not Grant Permission To Access Camera Roll.')
-                }
+//                 } else {
+//                     Alert.alert('Did Not Grant Permission To Access Camera Roll.')
+//                 }
 
-           }
-        catch (err){
-            console.warn(err);
-        }
+//            }
+//         catch (err){
+//             console.warn(err);
+//         }
 
-        return;
-  }
+//         return;
+//   }
 
-  render(){
+//   render(){
 
-        console.log(this.state.checkedPermissions);
-        try{
-            if(this.state.checkedPermissions !== true)
-            {
-                console.log(this.checkedPermissions);
-                this.requestExternalStoragePermission();
+//         console.log(this.state.checkedPermissions);
+//         try{
+//             if(this.state.checkedPermissions !== true)
+//             {
+//                 console.log(this.checkedPermissions);
+//                 this.requestExternalStoragePermission();
 
-                CameraRoll.getPhotos({
-                       first: 20,
-                       assetType: 'Photos',
-                     })
-                     .then(r =>
-                       this.setState({ photos: r.edges }))
-                     .catch((err) => {
-                        //Error Loading Images
-                        Alert.alert('Error Loading Images. Does the device have access to the necessary permissions.');
-                        console.log(err);
+//                 CameraRoll.getPhotos({
+//                        first: 20,
+//                        assetType: 'Photos',
+//                      })
+//                      .then(r =>
+//                        this.setState({ photos: r.edges }))
+//                      .catch((err) => {
+//                         //Error Loading Images
+//                         Alert.alert('Error Loading Images. Does the device have access to the necessary permissions.');
+//                         console.log(err);
 
-                     })
-                 this.setState({checkedPermissions : true});
-            }
-        }
-        catch (err){
-            console.warn(err);
-        }
-        console.log(this.checkedPermissions);
+//                      })
+//                  this.setState({checkedPermissions : true});
+//             }
+//         }
+//         catch (err){
+//             console.warn(err);
+//         }
+//         console.log(this.checkedPermissions);
 
-    const {navigate} = this.props.navigation;
+//     const {navigate} = this.props.navigation;
 
 
-    return(
-        <ScrollView contentContainerStyle={styles.gallery}>
+//     return(
+//         <ScrollView contentContainerStyle={styles.gallery}>
 
-          {this.state.photos.map((p,i) => {
+//           {this.state.photos.map((p,i) => {
 
-          return (
+//           return (
 
-            <Image
+//             <Image
 
-              key={i}
-              style = {{
-                width: 100,
-                height: 100,
-              }}
+//               key={i}
+//               style = {{
+//                 width: 100,
+//                 height: 100,
+//               }}
 
-              source={{ uri: p.node.image.uri}}
+//               source={{ uri: p.node.image.uri}}
 
-            />
-          );
-        })}
+//             />
+//           );
+//         })}
 
-        </ScrollView>
-      );
-    }
-  }
+//         </ScrollView>
+//       );
+//     }
+//   }
 
 
 const AppNavigator = createStackNavigator({
   Home: {screen: HomeScreen},
   //Camera: {screen: CameraScreen},
-  Gallery: {screen: GalleryScreen},
+  //Gallery: {screen: GalleryScreen},
 });
 
 export default createAppContainer(AppNavigator);

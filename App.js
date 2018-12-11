@@ -17,20 +17,22 @@ import {
 import { createStackNavigator, createAppContainer } from "react-navigation";
 import ImagePicker from 'react-native-image-picker';
 
+
+
 class HomeScreen extends React.Component {
 
   constructor(props) {
     super(props);
     this.state = {
       titleText: "Please choose how you would like to load an image.",
+      imageSelected: false,
     };
   }
 
 
   _cameraButton() {
     const options = {
-      title: 'Select Avatar',
-      customButtons: [{ name: 'fb', title: 'Choose Photo from Facebook' }],
+      title: 'Select Image',
       storageOptions: {
         skipBackup: true,
         path: 'images',
@@ -53,64 +55,51 @@ class HomeScreen extends React.Component {
         // const source = { uri: 'data:image/jpeg;base64,' + response.data };
 
         this.setState({
-          avatarSource: source,
-        });
+            parseSource: source,
+            imageSelected: true,
+          });
       }
     });
     Alert.alert('You tapped the button!'); //replace with button function
   }
 
-  render() {
-    const {navigate} = this.props.navigation;
-    return (
-      <View style={styles.container2}>
+  _galleryButton = () =>{
+      const options = {
+        title: 'Select Image',
+        storageOptions: {
+          skipBackup: true,
+          path: 'images',
+        },
+      };
 
-       <Text style={styles.text1}>
-          {this.state.titleText}{'\n'}{'\n'}
-        </Text>
+      ImagePicker.launchImageLibrary(options, (response) => {
+        console.log('Response = ', response);
 
-        <View style={styles.container1}>
+        if (response.didCancel) {
+          console.log('User cancelled image picker');
+        } else if (response.error) {
+          console.log('ImagePicker Error: ', response.error);
+        } else if (response.customButton) {
+          console.log('User tapped custom button: ', response.customButton);
+        } else {
+          const source = { uri: response.uri };
 
-          <View style={styles.buttonContainer}>
-            <Button
-              onPress={this._cameraButton}
-              title="Camera"
-            />
-          </View>
+          // You can also display the image using data:
+          // const source = { uri: 'data:image/jpeg;base64,' + response.data };
 
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Gallery"
-              color="#841584"
-              onPress={() => navigate('Gallery')}
+          this.setState({
+            parseSource: source,
+            imageSelected: true,
+          });
+        }
+      });
+      Alert.alert('You tapped the button!'); //replace with button function
 
-            />
-            </View>
-            <View style={styles.buttonContainer}>
-                <Button
-                  title="Parse Screen"
-                  color="#841584"
-                  onPress={() => navigate('Parse')}
-                 />
-            </View>
+    }
 
-        </View>
-      </View>
-    );
-  }
-}
-
-class GalleryScreen extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      checkedPermissions: false,
-      photos: [],
-    };
-  }
-  async requestExternalStoragePermission() {
+async requestExternalStoragePermission(){
         try {
-            const granted = PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+            const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
                  {'title': 'Requesting Camera Roll Access.','message': 'TEST'});
 
                 if(granted === PermissionsAndroid.RESULTS.GRANTED){
@@ -126,6 +115,101 @@ class GalleryScreen extends React.Component {
 
         return;
   }
+
+  async requestCameraPermission(){
+          try {
+              const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA,
+                   {'title': 'Requesting Camera Access.','message': 'TEST'});
+
+                  if(granted === PermissionsAndroid.RESULTS.GRANTED){
+
+                  } else {
+                      Alert.alert('Did Not Grant Permission To Access Camera Roll.')
+                  }
+
+             }
+          catch (err){
+              console.warn(err);
+          }
+
+          return;
+    }
+
+
+  render() {
+    this.requestExternalStoragePermission();
+    this.requestCameraPermission();
+    const {navigate} = this.props.navigation;
+
+    if(this.state.imageSelected === false)
+    {
+        return (
+          <View style={styles.container2}>
+
+           <Text style={styles.text1}>
+              {this.state.titleText}{'\n'}{'\n'}
+            </Text>
+
+            <View style={styles.container1}>
+
+              <View style={styles.buttonContainer}>
+                <Button
+                  onPress={this._cameraButton}
+                  title="Camera"
+                />
+              </View>
+
+              <View style={styles.buttonContainer}>
+                <Button
+                  title="Gallery"
+                  color="#841584"
+                  onPress={this._galleryButton}
+
+                />
+                </View>
+                <View style={styles.buttonContainer}>
+                    <Button
+                      title="Parse Screen"
+                      color="#841584"
+                      onPress={() => navigate('Parse')}
+                     />
+                </View>
+
+            </View>
+          </View>
+        );
+    }
+    else
+    {
+        return (
+                  <View style={styles.container2}>
+
+                   <Image source = {this.state.parseSource} style = {styles.imageStyle} />
+
+                    <View style={styles.container1}>
+                        <View style={styles.buttonContainer}>
+                            <Button
+                              title="Parse Screen"
+                              color="#841584"
+                              onPress={() => navigate('Parse', {imageSource: this.state.parseSource})}
+                             />
+                        </View>
+                    </View>
+                  </View>
+                );
+    }
+  }
+}
+
+class GalleryScreen extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      checkedPermissions: false,
+      photos: [],
+    };
+  }
+
 
   render(){
 
@@ -226,11 +310,17 @@ class ParseScreen extends React.Component {
 
     render() {
         const {navigate} = this.props.navigation;
+        const imageSource = this.props.navigation.getParam('imageSource', 'null');
+        console.log(imageSource);
+        this.setState({imageSource: imageSource});
         if(this.state.notParsed)
         {
             return (
                 <View style={styles.container2} >
 
+                    <View style={styles.boxedImage} >
+                        <Image source={imageSource} style = {styles.imageStyle} />
+                    </View>
                     <View style={styles.buttonContainer}>
                         <Button
                             title = "Parse Image"
@@ -245,7 +335,7 @@ class ParseScreen extends React.Component {
 
             <View style={styles.container3} >
                 <View style={styles.boxedImage} >
-                    <Image source={{uri: this.state.uri}} style={{width: Dimensions.get('window').width , height:200}} />
+                    <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
                 </View>
                 <View style={styles.buttonContainer}>
                     <FlatList
@@ -265,6 +355,8 @@ const AppNavigator = createStackNavigator({
 });
 
 export default createAppContainer(AppNavigator);
+
+
 
 const styles = StyleSheet.create({
   text1: {
@@ -302,5 +394,9 @@ const styles = StyleSheet.create({
   gallery: {
     flexWrap: 'wrap',
     flexDirection: 'row',
+  },
+  imageStyle: {
+    width: Dimensions.get('window').width ,
+    height:200
   },
 });

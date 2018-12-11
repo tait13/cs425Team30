@@ -21,16 +21,21 @@ import ImagePicker from 'react-native-image-picker';
 
 class HomeScreen extends React.Component {
 
+  static navigationOptions = {
+      header: null,
+    };
+
   constructor(props) {
     super(props);
     this.state = {
       titleText: "Please choose how you would like to load an image.",
       imageSelected: false,
+      notParsed: true,
     };
   }
 
 
-  _cameraButton() {
+  _cameraButton = () =>{
     const options = {
       title: 'Select Image',
       storageOptions: {
@@ -49,18 +54,20 @@ class HomeScreen extends React.Component {
       } else if (response.customButton) {
         console.log('User tapped custom button: ', response.customButton);
       } else {
-        const source = { uri: response.uri };
+        const source = { uri: response.uri, type: response.type};
 
         // You can also display the image using data:
         // const source = { uri: 'data:image/jpeg;base64,' + response.data };
 
         this.setState({
-            parseSource: source,
-            imageSelected: true,
-          });
+          parseSource: source,
+          imageSelected: true,
+        });
+        console.log(source);
       }
     });
     Alert.alert('You tapped the button!'); //replace with button function
+
   }
 
   _galleryButton = () =>{
@@ -82,7 +89,7 @@ class HomeScreen extends React.Component {
         } else if (response.customButton) {
           console.log('User tapped custom button: ', response.customButton);
         } else {
-          const source = { uri: response.uri };
+          const source = { uri: response.uri, type: response.type};
 
           // You can also display the image using data:
           // const source = { uri: 'data:image/jpeg;base64,' + response.data };
@@ -91,6 +98,7 @@ class HomeScreen extends React.Component {
             parseSource: source,
             imageSelected: true,
           });
+          console.log(source);
         }
       });
       Alert.alert('You tapped the button!'); //replace with button function
@@ -135,6 +143,43 @@ async requestExternalStoragePermission(){
           return;
     }
 
+    _post = () =>{
+            var data = new FormData();
+            data.append('photo', {uri: this.state.parseSource.uri, type: this.state.parseSource.type, name:'testPhoto',});
+            data.append('imageLoc', 'serial.png');
+
+            return fetch('https://cs425.alextait.net/docuTest.php', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'multipart/form-data',
+                },
+                body: data
+            })
+            .then((response) => { console.log(response); return response.json();})
+            .then((receivedData) => {
+                console.log(data);
+
+                console.log(this.state.notParsed);
+                console.log(receivedData.Strings.length);
+                this.setState({
+                    notParsed: false,
+                    parsedStrings: receivedData.Strings,
+                    uri: receivedData.imageURL,
+                }, function(){});
+                console.log(this.state.uri);
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+        }
+
+  _reset = () => {
+        this.setState({
+            imageSelected: false,
+            notParsed: true,
+        });
+  }
 
   render() {
     this.requestExternalStoragePermission();
@@ -167,36 +212,63 @@ async requestExternalStoragePermission(){
 
                 />
                 </View>
-                <View style={styles.buttonContainer}>
-                    <Button
-                      title="Parse Screen"
-                      color="#841584"
-                      onPress={() => navigate('Parse')}
-                     />
-                </View>
-
             </View>
           </View>
         );
     }
     else
     {
-        return (
-                  <View style={styles.container2}>
+        if(this.state.notParsed)
+        {
+            return (
+                      <View style={styles.container3}>
 
-                   <Image source = {this.state.parseSource} style = {styles.imageStyle} />
+                       <Image source = {this.state.parseSource} style = {styles.imageStyle} />
 
-                    <View style={styles.container1}>
-                        <View style={styles.buttonContainer}>
-                            <Button
-                              title="Parse Screen"
-                              color="#841584"
-                              onPress={() => navigate('Parse', {imageSource: this.state.parseSource})}
-                             />
+                        <View style={styles.container2}>
+                            <View style={styles.buttonContainer}>
+                                <Button
+                                  title="Parse"
+                                  color="#841584"
+                                  onPress={this._post}
+                                />
+                             </View>
+                             <View style={styles.buttonContainer}>
+                                 <Button
+                                   title="Reset"
+                                   color="#841584"
+                                   onPress={this._reset}
+                                 />
+                              </View>
+
                         </View>
-                    </View>
-                  </View>
-                );
+                      </View>
+                    );
+        }
+        else
+        {
+            return (
+
+                        <View style={styles.container3} >
+                            <View style={styles.boxedImage} >
+                                <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
+                            </View>
+                            <View style={styles.buttonContainer}>
+                                <Button
+                                  title="Reset"
+                                  color="#841584"
+                                  onPress={this._reset}
+                                />
+                             </View>
+                            <View style={styles.buttonContainer}>
+                                <FlatList
+                                    data={this.state.parsedStrings}
+                                    renderItem={({item}) => <Text>{item.Word}{"\n"}Bounds:{"\n"}{item.Bounds}</Text>}
+                                />
+                            </View>
+                        </View>
+                    );
+        }
     }
   }
 }
@@ -274,26 +346,49 @@ class ParseScreen extends React.Component {
         super(props);
         this.state = {
             notParsed : true,
+            imageSourceLoaded : false,
             uri : '',
             parsedStrings : [],
 
         };
     }
-
+    _upload = () => {
+        var data = new FormData();
+        console.log(this.state.imageSource);
+        console.log(this.state.imageSource.type);
+        data.append('photo', {uri: this.state.imageSource.uri, type: this.state.imageSource.type, name:'testPhoto',});
+        console.log(data);
+        data.append('imageLoc', 'serial.png');
+        return fetch('https://cs425.alextait.net/docuTest.php', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'multipart/form-data',
+            },
+            body: data,
+        })
+        .then(response => {
+            console.log(data);
+            console.log(response);
+        });
+    }
     _post = () =>{
         var data = new FormData();
+        data.append('photo', {uri: this.state.imageSource.uri, type: this.state.imageSource.type, name:'testPhoto',});
         data.append('imageLoc', 'serial.png');
 
         return fetch('https://cs425.alextait.net/docuTest.php', {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
-                'Content-Type': 'multipart/form-date',
+                'Content-Type': 'multipart/form-data',
             },
             body: data
         })
-        .then((response) => response.json())
+        .then((response) => { console.log(response); return response.json();})
         .then((receivedData) => {
+            console.log(data);
+
             console.log(this.state.notParsed);
             console.log(receivedData.Strings.length);
             this.setState({
@@ -311,12 +406,15 @@ class ParseScreen extends React.Component {
     render() {
         const {navigate} = this.props.navigation;
         const imageSource = this.props.navigation.getParam('imageSource', 'null');
-        console.log(imageSource);
-        this.setState({imageSource: imageSource});
+        if(this.state.imageSourceLoaded === false)
+        {
+            console.log(imageSource);
+            this.setState({imageSource: imageSource, imageSourceLoaded: true,});
+        }
         if(this.state.notParsed)
         {
             return (
-                <View style={styles.container2} >
+                <View style={styles.container1} >
 
                     <View style={styles.boxedImage} >
                         <Image source={imageSource} style = {styles.imageStyle} />
@@ -370,7 +468,7 @@ const styles = StyleSheet.create({
   },
   container2: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginLeft: 20,
     marginRight: 20,
   },
@@ -386,7 +484,7 @@ const styles = StyleSheet.create({
 
   },
   buttonContainer: {
-    margin: 20,
+    margin: 0,
   },
   boxedImage: {
       margin: 0,

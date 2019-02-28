@@ -256,7 +256,40 @@ async requestExternalStoragePermission(){
 
   _chooseFromDatabase = (item) => {
         console.log(item);
-        return;
+        this.setState({
+                   loadedSingleObject: true,
+                });
+                var data = new FormData();
+                data.append('creationTime', item.creationTime);
+
+                return fetch('https://cs425.alextait.net/retrieveSpecificAsset.php', {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'multipart/form-data',
+                    },
+                    body: data
+                })
+                .then((response) => {
+                 console.log(response);
+                 return response.json();
+                 })
+                .then((receivedData) => {
+                    console.log(data);
+                    console.log(receivedData);
+
+                    this.setState({
+                        creationTime: receivedData.creationTime,
+                        originalImageLoc: receivedData.originalImageLoc,
+                        boxedImageLoc: receivedData.boxedImageLoc,
+                        assetJSON: receivedData.assetJSON,
+                    }, function(){});
+
+                    console.log(this.state.assetJSON);
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
   }
   render() {
     this.requestExternalStoragePermission();

@@ -13,6 +13,9 @@ import {
   PermissionsAndroid,
   FlatList,
   Dimensions,
+  ActivityIndicator,
+  TouchableHighlight,
+  TouchableOpacity,
   } from 'react-native';
 import { createStackNavigator, createAppContainer } from "react-navigation";
 import ImagePicker from 'react-native-image-picker';
@@ -25,16 +28,20 @@ class HomeScreen extends React.Component {
       header: null,
     };
 
+  //Default constructor for Home Screen
   constructor(props) {
     super(props);
     this.state = {
       titleText: "Please choose how you would like to load an image.",
       imageSelected: false,
       notParsed: true,
+      test: false,
+      postCalled: false,
+      databaseLoaded: false,
     };
   }
 
-
+//Manages Camera
   _cameraButton = () =>{
     const options = {
       title: 'Select Image',
@@ -66,7 +73,6 @@ class HomeScreen extends React.Component {
         console.log(source);
       }
     });
-    Alert.alert('You tapped the button!'); //replace with button function
 
   }
 
@@ -101,7 +107,6 @@ class HomeScreen extends React.Component {
           console.log(source);
         }
       });
-      Alert.alert('You tapped the button!'); //replace with button function
 
     }
 
@@ -144,6 +149,9 @@ async requestExternalStoragePermission(){
     }
 
     _post = () =>{
+            this.setState({
+                postCalled: true,
+            });
             var data = new FormData();
             data.append('photo', {uri: this.state.parseSource.uri, type: this.state.parseSource.type, name:'testPhoto',});
             data.append('imageLoc', 'serial.png');
@@ -156,16 +164,22 @@ async requestExternalStoragePermission(){
                 },
                 body: data
             })
-            .then((response) => { console.log(response); return response.json();})
+            .then((response) => {
+             console.log(response);
+             return response.json();
+             })
             .then((receivedData) => {
                 console.log(data);
 
                 console.log(this.state.notParsed);
-                console.log(receivedData.Strings.length);
+                console.log(receivedData);
+
                 this.setState({
                     notParsed: false,
                     parsedStrings: receivedData.Strings,
+                    origUri: receivedData.originalImage,
                     uri: receivedData.imageURL,
+                    currentJSON: JSON.stringify(receivedData),
                 }, function(){});
                 console.log(this.state.uri);
             })
@@ -178,9 +192,105 @@ async requestExternalStoragePermission(){
         this.setState({
             imageSelected: false,
             notParsed: true,
+            databaseLoaded: false,
         });
   }
 
+  _database = () => {
+        this.setState({
+           databaseLoaded: true,
+        });
+        var data = new FormData();
+        data.append('Total', 25);
+
+        return fetch('https://cs425.alextait.net/retrieveAssets.php', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'multipart/form-data',
+            },
+            body: data
+        })
+        .then((response) => {
+         console.log(response);
+         return response.json();
+         })
+        .then((receivedData) => {
+            console.log(data);
+            console.log(receivedData);
+
+            this.setState({
+               retrievedData: receivedData.rows,
+               totalRows: receivedData.rowCount,
+            }, function(){});
+        })
+        .catch((error) => {
+            console.error(error);
+        });
+  }
+
+  _upload = () => {
+        var data = new FormData();
+        data.append('originalImageLoc', this.state.origUri);
+        data.append('boxedImageLoc', this.state.uri);
+        data.append('name', 'test');
+
+        console.log(this.state.currentJSON);
+        data.append('json', this.state.currentJSON)
+
+        console.log(data);
+
+        return fetch('https://cs425.alextait.net/databaseUpload.php', {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'text/plain',
+                            'Content-Type': 'multipart/form-data',
+                        },
+                        body: data
+                    })
+                    .then((response) => { console.log(response); return response;})
+                    .catch((error) => {
+                        console.error(error);
+                    });
+  }
+
+  _chooseFromDatabase = (item) => {
+        console.log(item);
+        this.setState({
+                   loadedSingleObject: true,
+                });
+                var data = new FormData();
+                data.append('creationTime', item.creationTime);
+
+                return fetch('https://cs425.alextait.net/retrieveSpecificAsset.php', {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'multipart/form-data',
+                    },
+                    body: data
+                })
+                .then((response) => {
+                 console.log(response);
+                 return response.json();
+                 })
+                .then((receivedData) => {
+                    console.log(data);
+                    console.log(receivedData);
+
+                    this.setState({
+                        creationTime: receivedData.creationTime,
+                        originalImageLoc: receivedData.originalImageLoc,
+                        boxedImageLoc: receivedData.boxedImageLoc,
+                        assetJSON: receivedData.assetJSON,
+                    }, function(){});
+
+                    console.log(this.state.assetJSON);
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+  }
   render() {
     this.requestExternalStoragePermission();
     this.requestCameraPermission();
@@ -188,39 +298,85 @@ async requestExternalStoragePermission(){
 
     if(this.state.imageSelected === false)
     {
-        return (
-          <View style={styles.container2}>
+        if(this.state.databaseLoaded === false)
+        {
+            return (
+              <View style={styles.container2}>
 
-           <Text style={styles.text1}>
-              {this.state.titleText}{'\n'}{'\n'}
-            </Text>
+               <Text style={styles.text1}>
+                  {this.state.titleText}{'\n'}{'\n'}
+                </Text>
 
-            <View style={styles.container1}>
+                <View style={styles.container1}>
 
-              <View style={styles.buttonContainer}>
-                <Button
-                  onPress={this._cameraButton}
-                  title="Camera"
-                />
-              </View>
+                  <View style={styles.buttonContainer}>
+                    <Button
+                      onPress={this._cameraButton}
+                      title="Camera"
+                    />
+                  </View>
 
-              <View style={styles.buttonContainer}>
-                <Button
-                  title="Gallery"
-                  color="#841584"
-                  onPress={this._galleryButton}
+                  <View style={styles.buttonContainer}>
+                    <Button
+                      title="Gallery"
+                      color="#841584"
+                      onPress={this._galleryButton}
 
-                />
+                    />
+                    </View>
+                  <View style={styles.buttonContainer}>
+                       <Button
+                         title="Previous Uploads"
+                         onPress={this._database}
+
+                       />
+                  </View>
                 </View>
-            </View>
-          </View>
-        );
+              </View>
+            );
+        }
+        else
+        {
+
+            return (
+                   <View style={styles.container3} >
+                      <View style={styles.buttonContainer}>
+                          <Button
+                            title="Reset"
+                            color="#841584"
+                            onPress={this._reset}
+                          />
+                       </View>
+                      <View style={styles.buttonContainer}>
+                          <View style={styles.centeredSmallText}>
+                          <Text>Total Results: {this.state.totalRows}</Text>
+                          </View>
+                          <FlatList
+
+                              data={this.state.retrievedData}
+                              renderItem={({item}) =>
+
+
+                                    <TouchableOpacity style={styles.touchableContainer} onPress={() => this._chooseFromDatabase(item)}>
+                                    <View style={styles.centeredSmallText}>
+                                    <Text>Creation Time: {item.creationTime}</Text>
+                                    <Image source = {{uri: item.originalImageLoc}} style = {styles.imageStyle} />
+                                    </View>
+                                    </TouchableOpacity>
+                              }
+                          />
+                      </View>
+                  </View>
+                );
+        }
     }
     else
     {
         if(this.state.notParsed)
         {
-            return (
+            if(this.state.postCalled === false)
+            {
+                return (
                       <View style={styles.container3}>
 
                        <Image source = {this.state.parseSource} style = {styles.imageStyle} />
@@ -243,7 +399,24 @@ async requestExternalStoragePermission(){
 
                         </View>
                       </View>
+                );
+            }
+            else
+            {
+                return (
+                      <View style={styles.container3}>
+
+                       <Image source = {this.state.parseSource} style = {styles.imageStyle} />
+
+                        <View style={styles.container2}>
+                            <View style={styles.buttonContainer}>
+                                <ActivityIndicator size="large" color="#0000ff" />
+                             </View>
+                        </View>
+                      </View>
                     );
+            }
+
         }
         else
         {
@@ -258,6 +431,11 @@ async requestExternalStoragePermission(){
                                   title="Reset"
                                   color="#841584"
                                   onPress={this._reset}
+                                />
+                                <Button
+                                  title="Upload To Database"
+                                  color="#841584"
+                                  onPress={this._upload}
                                 />
                              </View>
                             <View style={styles.buttonContainer}>
@@ -486,6 +664,10 @@ const styles = StyleSheet.create({
   buttonContainer: {
     margin: 0,
   },
+  centeredSmallText: {
+      margin: 0,
+      justifyContent: 'center',
+  },
   boxedImage: {
       margin: 0,
     },
@@ -496,5 +678,9 @@ const styles = StyleSheet.create({
   imageStyle: {
     width: Dimensions.get('window').width ,
     height:200
+  },
+  touchableContainer: {
+    backgroundColor: '#DDDDDD',
+
   },
 });

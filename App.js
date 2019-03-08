@@ -2,7 +2,6 @@ import React, {Component} from 'react';
 import {
   Platform,
   StyleSheet,
-  Button,
   Alert,
   Registry,
   Text,
@@ -16,9 +15,11 @@ import {
   ActivityIndicator,
   TouchableHighlight,
   TouchableOpacity,
+  TextInput,
   } from 'react-native';
 import { createStackNavigator, createAppContainer } from "react-navigation";
 import ImagePicker from 'react-native-image-picker';
+import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input } from 'native-base';
 
 
 
@@ -76,6 +77,7 @@ class HomeScreen extends React.Component {
 
   }
 
+  //Manages Gallery Access
   _galleryButton = () =>{
       const options = {
         title: 'Select Image',
@@ -110,6 +112,7 @@ class HomeScreen extends React.Component {
 
     }
 
+//Request permission to access android device storage
 async requestExternalStoragePermission(){
         try {
             const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
@@ -128,82 +131,37 @@ async requestExternalStoragePermission(){
 
         return;
   }
+//Request permission to access android camera
+async requestCameraPermission(){
+        try {
+            const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA,
+                  {'title': 'Requesting Camera Access.','message': 'TEST'});
 
-  async requestCameraPermission(){
-          try {
-              const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA,
-                   {'title': 'Requesting Camera Access.','message': 'TEST'});
+                if(granted === PermissionsAndroid.RESULTS.GRANTED){
 
-                  if(granted === PermissionsAndroid.RESULTS.GRANTED){
+                } else {
+                    Alert.alert('Did Not Grant Permission To Access Camera Roll.')
+                }
 
-                  } else {
-                      Alert.alert('Did Not Grant Permission To Access Camera Roll.')
-                  }
-
-             }
-          catch (err){
-              console.warn(err);
-          }
-
-          return;
-    }
-
-    _post = () =>{
-            this.setState({
-                postCalled: true,
-            });
-            var data = new FormData();
-            data.append('photo', {uri: this.state.parseSource.uri, type: this.state.parseSource.type, name:'testPhoto',});
-            data.append('imageLoc', 'serial.png');
-
-            return fetch('https://cs425.alextait.net/docuTest.php', {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'multipart/form-data',
-                },
-                body: data
-            })
-            .then((response) => {
-             console.log(response);
-             return response.json();
-             })
-            .then((receivedData) => {
-                console.log(data);
-
-                console.log(this.state.notParsed);
-                console.log(receivedData);
-
-                this.setState({
-                    notParsed: false,
-                    parsedStrings: receivedData.Strings,
-                    origUri: receivedData.originalImage,
-                    uri: receivedData.imageURL,
-                    currentJSON: JSON.stringify(receivedData),
-                }, function(){});
-                console.log(this.state.uri);
-            })
-            .catch((error) => {
-                console.error(error);
-            });
+            }
+        catch (err){
+            console.warn(err);
         }
 
-  _reset = () => {
-        this.setState({
-            imageSelected: false,
-            notParsed: true,
-            databaseLoaded: false,
-        });
+        return;
   }
 
-  _database = () => {
+//Used to parse an image
+//Uploads image to webserver using POST call and recieves parsed data as json
+_post = () =>{
         this.setState({
-           databaseLoaded: true,
+            postCalled: true,
         });
         var data = new FormData();
-        data.append('Total', 25);
+        data.append('photo', {uri: this.state.parseSource.uri, type: this.state.parseSource.type, name:'testPhoto',});
+        data.append('imageLoc', 'serial.png');
 
-        return fetch('https://cs425.alextait.net/retrieveAssets.php', {
+        return fetch('https://cs425.alextait.net/docuTest.php', {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
@@ -212,94 +170,152 @@ async requestExternalStoragePermission(){
             body: data
         })
         .then((response) => {
-         console.log(response);
-         return response.json();
-         })
+          console.log(response);
+          return response.json();
+          })
         .then((receivedData) => {
             console.log(data);
+
+            console.log(this.state.notParsed);
             console.log(receivedData);
 
             this.setState({
-               retrievedData: receivedData.rows,
-               totalRows: receivedData.rowCount,
+                notParsed: false,
+                parsedStrings: receivedData.Strings,
+                origUri: receivedData.originalImage,
+                uri: receivedData.imageURL,
+                currentJSON: JSON.stringify(receivedData),
             }, function(){});
+            console.log(this.state.uri);
         })
         .catch((error) => {
             console.error(error);
         });
-  }
+    }
 
-  _upload = () => {
-        var data = new FormData();
-        data.append('originalImageLoc', this.state.origUri);
-        data.append('boxedImageLoc', this.state.uri);
-        data.append('name', 'test');
+//Sets state back to home
+_reset = () => {
+      this.setState({
+          imageSelected: false,
+          notParsed: true,
+          databaseLoaded: false,
+      });
+}
 
-        console.log(this.state.currentJSON);
-        data.append('json', this.state.currentJSON)
+//Accesses database to view every upload asset
+_database = () => {
+      this.setState({
+          databaseLoaded: true,
+      });
+      var data = new FormData();
+      data.append('Total', 25);
 
-        console.log(data);
+      return fetch('https://cs425.alextait.net/retrieveAssets.php', {
+          method: 'POST',
+          headers: {
+              Accept: 'application/json',
+              'Content-Type': 'multipart/form-data',
+          },
+          body: data
+      })
+      .then((response) => {
+        console.log(response);
+        return response.json();
+        })
+      .then((receivedData) => {
+          console.log(data);
+          console.log(receivedData);
 
-        return fetch('https://cs425.alextait.net/databaseUpload.php', {
-                        method: 'POST',
-                        headers: {
-                            Accept: 'text/plain',
-                            'Content-Type': 'multipart/form-data',
-                        },
-                        body: data
-                    })
-                    .then((response) => { console.log(response); return response;})
-                    .catch((error) => {
-                        console.error(error);
-                    });
-  }
+          this.setState({
+              retrievedData: receivedData.rows,
+              totalRows: receivedData.rowCount,
+          }, function(){});
+      })
+      .catch((error) => {
+          console.error(error);
+      });
+}
 
-  _chooseFromDatabase = (item) => {
-        console.log(item);
-        this.setState({
-                   loadedSingleObject: true,
-                });
-                var data = new FormData();
-                data.append('creationTime', item.creationTime);
+//Uploads asset data to the database
+_upload = () => {
+      var data = new FormData();
+      data.append('originalImageLoc', this.state.origUri);
+      data.append('boxedImageLoc', this.state.uri);
+      data.append('name', 'test');
 
-                return fetch('https://cs425.alextait.net/retrieveSpecificAsset.php', {
-                    method: 'POST',
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'multipart/form-data',
-                    },
-                    body: data
+      console.log(this.state.currentJSON);
+      data.append('json', this.state.currentJSON)
+
+      console.log(data);
+
+      return fetch('https://cs425.alextait.net/databaseUpload.php', {
+                      method: 'POST',
+                      headers: {
+                          Accept: 'text/plain',
+                          'Content-Type': 'multipart/form-data',
+                      },
+                      body: data
+                  })
+                  .then((response) => { console.log(response); return response;})
+                  .catch((error) => {
+                      console.error(error);
+                  });
+}
+
+//Passes creation time of selected asset to the server to retrieve its' parsed data
+_chooseFromDatabase = (item) => {
+      console.log(item);
+      this.setState({
+                  loadedSingleObject: true,
+              });
+              var data = new FormData();
+              data.append('creationTime', item.creationTime);
+
+              return fetch('https://cs425.alextait.net/retrieveSpecificAsset.php', {
+                  method: 'POST',
+                  headers: {
+                      Accept: 'application/json',
+                      'Content-Type': 'multipart/form-data',
+                  },
+                  body: data
+              })
+              .then((response) => {
+                console.log(response);
+                return response.json();
                 })
-                .then((response) => {
-                 console.log(response);
-                 return response.json();
-                 })
-                .then((receivedData) => {
-                    console.log(data);
-                    console.log(receivedData);
+              .then((receivedData) => {
+                  console.log(data);
+                  console.log(receivedData);
 
-                    this.setState({
-                        creationTime: receivedData.creationTime,
-                        originalImageLoc: receivedData.originalImageLoc,
-                        boxedImageLoc: receivedData.boxedImageLoc,
-                        assetJSON: receivedData.assetJSON,
-                    }, function(){});
+                  this.setState({
+                      creationTime: receivedData.creationTime,
+                      originalImageLoc: receivedData.originalImageLoc,
+                      boxedImageLoc: receivedData.boxedImageLoc,
+                      assetJSON: receivedData.assetJSON,
+                  }, function(){});
 
-                    console.log(this.state.assetJSON);
-                })
-                .catch((error) => {
-                    console.error(error);
-                });
-  }
+                  console.log(this.state.assetJSON);
+              })
+              .catch((error) => {
+                  console.error(error);
+              });
+}
+
+//Render call
   render() {
+
+    //Check permissions
     this.requestExternalStoragePermission();
     this.requestCameraPermission();
     const {navigate} = this.props.navigation;
-
+    
+    
     if(this.state.imageSelected === false)
     {
+    //Screens available when no image is selected
         if(this.state.databaseLoaded === false)
         {
+            //Home Screen render
             return (
               <View style={styles.container2}>
 
@@ -308,45 +324,39 @@ async requestExternalStoragePermission(){
                 </Text>
 
                 <View style={styles.container1}>
+                    <Button iconLeft block onPress={this._cameraButton}>
+                      <Icon name="camera" />
+                      <Text>  Camera</Text>
+                    </Button>
 
-                  <View style={styles.buttonContainer}>
-                    <Button
-                      onPress={this._cameraButton}
-                      title="Camera"
-                    />
-                  </View>
-
-                  <View style={styles.buttonContainer}>
-                    <Button
-                      title="Gallery"
-                      color="#841584"
-                      onPress={this._galleryButton}
-
-                    />
-                    </View>
-                  <View style={styles.buttonContainer}>
-                       <Button
-                         title="Previous Uploads"
-                         onPress={this._database}
-
-                       />
-                  </View>
+                    <Button iconLeft block onPress={this._galleryButton}>
+                      <Icon name="image" />
+                      <Text>  Gallery</Text>
+                    </Button>
+                    <Button iconLeft block backgroundColor="#841584" onPress={this._database}>
+                      <Text>  Previous Uploads</Text>
+                    </Button>
+                  
                 </View>
               </View>
             );
         }
         else
         {
-
+            //Renders screen to view database entries
             return (
                    <View style={styles.container3} >
-                      <View style={styles.buttonContainer}>
-                          <Button
-                            title="Reset"
-                            color="#841584"
-                            onPress={this._reset}
-                          />
-                       </View>
+                      <Header>
+                        <Left>
+                          <Button transparent onPress={this._reset}>
+                            <Icon name='arrow-back' />
+                            <Text> Back </Text>
+                          </Button>
+                        </Left>
+                        <Body>
+
+                        </Body>
+                      </Header>
                       <View style={styles.buttonContainer}>
                           <View style={styles.centeredSmallText}>
                           <Text>Total Results: {this.state.totalRows}</Text>
@@ -376,36 +386,44 @@ async requestExternalStoragePermission(){
         {
             if(this.state.postCalled === false)
             {
+                //Renders screen to view selected image and parse
                 return (
-                      <View style={styles.container3}>
+                    <Container>
+                      <Header>
+                        <Left>
+                          <Button transparent onPress={this._reset}>
+                            <Icon name='arrow-back' />
+                            <Text> Back </Text>
+                          </Button>
+                        </Left>
+                        <Body>
+                          
+                        </Body>
+                      </Header>
+                      <Image source = {this.state.parseSource} style = {styles.imageStyle} />
 
-                       <Image source = {this.state.parseSource} style = {styles.imageStyle} />
-
-                        <View style={styles.container2}>
-                            <View style={styles.buttonContainer}>
-                                <Button
-                                  title="Parse"
-                                  color="#841584"
-                                  onPress={this._post}
-                                />
-                             </View>
-                             <View style={styles.buttonContainer}>
-                                 <Button
-                                   title="Reset"
-                                   color="#841584"
-                                   onPress={this._reset}
-                                 />
-                              </View>
-
-                        </View>
-                      </View>
+                      <Button block onPress={this._post} >
+                        <Text>Parse</Text>
+                      </Button>
+                    </Container>  
                 );
             }
             else
             {
+                //Render while waiting for image to be parsed
                 return (
                       <View style={styles.container3}>
-
+                      <Header>
+                        <Left>
+                          <Button transparent onPress={this._reset}>
+                            <Icon name='home' />
+                            <Text> Home </Text>
+                          </Button>
+                        </Left>
+                        <Body>
+                          
+                        </Body>
+                      </Header>
                        <Image source = {this.state.parseSource} style = {styles.imageStyle} />
 
                         <View style={styles.container2}>
@@ -420,28 +438,36 @@ async requestExternalStoragePermission(){
         }
         else
         {
+            //Render when image has been parsed and data received 
             return (
 
                         <View style={styles.container3} >
+                        <Header>
+                        <Left>
+                          <Button transparent onPress={this._reset}>
+                            <Icon name='home' />
+                            <Text> Home </Text>
+                          </Button>
+                        </Left>
+                        <Body>
+                          
+                        </Body>
+                        </Header>
                             <View style={styles.boxedImage} >
                                 <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
                             </View>
+                            <Button full onPress={this._upload}>
+                              <Text> Upload To Database</Text>
+                            </Button>
+
                             <View style={styles.buttonContainer}>
-                                <Button
-                                  title="Reset"
-                                  color="#841584"
-                                  onPress={this._reset}
-                                />
-                                <Button
-                                  title="Upload To Database"
-                                  color="#841584"
-                                  onPress={this._upload}
-                                />
-                             </View>
-                            <View style={styles.buttonContainer}>
+                                {/* renderItem={({item}) => <Item regular><Input placeholder={item.Word}/><Text>{"\n"}Bounds:{"\n"}{item.Bounds}</Text></Item>} */}
                                 <FlatList
                                     data={this.state.parsedStrings}
+                                    
                                     renderItem={({item}) => <Text>{item.Word}{"\n"}Bounds:{"\n"}{item.Bounds}</Text>}
+                                    
+
                                 />
                             </View>
                         </View>
@@ -451,6 +477,7 @@ async requestExternalStoragePermission(){
   }
 }
 
+//Not currently used. Navigation screen for react-navigation module
 class GalleryScreen extends React.Component {
   constructor(props) {
     super(props);

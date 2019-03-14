@@ -39,6 +39,7 @@ class HomeScreen extends React.Component {
       test: false,
       postCalled: false,
       databaseLoaded: false,
+      refresh: false,
     };
   }
 
@@ -198,7 +199,11 @@ _reset = () => {
       this.setState({
           imageSelected: false,
           notParsed: true,
+          test: false,
+          postCalled: false,
           databaseLoaded: false,
+          refresh: false,
+          loadedSingleObject: false,
       });
 }
 
@@ -291,10 +296,11 @@ _chooseFromDatabase = (item) => {
                       creationTime: receivedData.creationTime,
                       originalImageLoc: receivedData.originalImageLoc,
                       boxedImageLoc: receivedData.boxedImageLoc,
-                      assetJSON: receivedData.assetJSON,
+                      parsedStrings: JSON.parse(receivedData.assetJSON),
+                      
                   }, function(){});
 
-                  console.log(this.state.assetJSON);
+                  console.log(this.state.parsedStrings);
               })
               .catch((error) => {
                   console.error(error);
@@ -319,21 +325,23 @@ _chooseFromDatabase = (item) => {
             return (
               <View style={styles.container2}>
 
-               <Text style={styles.text1}>
+               {/* <Text style={styles.text1}>
                   {this.state.titleText}{'\n'}{'\n'}
-                </Text>
-
+                </Text> */}
+                
                 <View style={styles.container1}>
-                    <Button iconLeft block onPress={this._cameraButton}>
+                <Image source={{uri: 'https://cs425.alextait.net/unrlogo.png'}} style = {{alignSelf: "center", width:200, height:200, marginBottom: 20, }}/>
+                
+                    <Button iconLeft block backgroundColor="#66ccff" style = {{marginBottom: 2}} onPress={this._cameraButton}>
                       <Icon name="camera" />
                       <Text>  Camera</Text>
                     </Button>
 
-                    <Button iconLeft block onPress={this._galleryButton}>
+                    <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={this._galleryButton}>
                       <Icon name="image" />
                       <Text>  Gallery</Text>
                     </Button>
-                    <Button iconLeft block backgroundColor="#841584" onPress={this._database}>
+                    <Button iconLeft block backgroundColor="#66ccff" style = {{marginBottom: 2}} onPress={this._database}>
                       <Text>  Previous Uploads</Text>
                     </Button>
                   
@@ -343,41 +351,78 @@ _chooseFromDatabase = (item) => {
         }
         else
         {
-            //Renders screen to view database entries
-            return (
-                   <View style={styles.container3} >
-                      <Header>
-                        <Left>
-                          <Button transparent onPress={this._reset}>
-                            <Icon name='arrow-back' />
-                            <Text> Back </Text>
-                          </Button>
-                        </Left>
-                        <Body>
+            //Renders screen to view a single chosen database entry
+            if(this.state.loadedSingleObject)
+            {
+              return (
+                <View style={styles.container3} >
+                <Header style={{ backgroundColor: '#33ccff' }}>
+                <Left>
+                  <Button transparent onPress={this._reset}>
+                    <Icon name='home' />
+                    <Text> Home </Text>
+                  </Button>
+                </Left>
+                <Body>
+  
+                </Body>
+                </Header>
+                    <View style={styles.boxedImage} >
+                        <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} />
+                    </View>
+                    <Text>Already in Database</Text>
+  
+                    <View style={styles.buttonContainer}>
+                        <FlatList
+                            data={this.state.parsedStrings}
+  
+                            renderItem={({item}) => <Text>{item.Word}{"\n"}Bounds:{"\n"}{item.Bounds}</Text>}
+  
+  
+                        />
+                    </View>
+                </View>
+              );
+            }
+            else
+            {
+              //Renders screen to view database entries
+              return (
+                <View style={styles.container3} >
+                   <Header style={{ backgroundColor: '#33ccff' }}>
+                     <Left>
+                       <Button transparent onPress={this._reset}>
+                         <Icon name='arrow-back' />
+                         <Text> Back </Text>
+                       </Button>
+                     </Left>
+                     <Body>
 
-                        </Body>
-                      </Header>
-                      <View style={styles.buttonContainer}>
-                          <View style={styles.centeredSmallText}>
-                          <Text>Total Results: {this.state.totalRows}</Text>
-                          </View>
-                          <FlatList
+                     </Body>
+                   </Header>
+                   <View style={styles.buttonContainer}>
+                       <View style={styles.centeredSmallText}>
+                       <Text>Total Results: {this.state.totalRows}</Text>
+                       </View>
+                       <FlatList
 
-                              data={this.state.retrievedData}
-                              renderItem={({item}) =>
+                           data={this.state.retrievedData}
+                           renderItem={({item}) =>
 
 
-                                    <TouchableOpacity style={styles.touchableContainer} onPress={() => this._chooseFromDatabase(item)}>
-                                    <View style={styles.centeredSmallText}>
-                                    <Text>Creation Time: {item.creationTime}</Text>
-                                    <Image source = {{uri: item.originalImageLoc}} style = {styles.imageStyle} />
-                                    </View>
-                                    </TouchableOpacity>
-                              }
-                          />
-                      </View>
-                  </View>
-                );
+                                 <TouchableOpacity style={styles.touchableContainer} onPress={() => this._chooseFromDatabase(item)}>
+                                 <View style={styles.centeredSmallText}>
+                                 <Text>Creation Time: {item.creationTime}</Text>
+                                 <Image source = {{uri: item.originalImageLoc}} style = {styles.imageStyle} />
+                                 </View>
+                                 </TouchableOpacity>
+                           }
+                       />
+                   </View>
+               </View>
+             );
+            }
+            
         }
     }
     else
@@ -389,7 +434,7 @@ _chooseFromDatabase = (item) => {
                 //Renders screen to view selected image and parse
                 return (
                     <Container>
-                      <Header>
+                      <Header style={{ backgroundColor: '#33ccff' }}>
                         <Left>
                           <Button transparent onPress={this._reset}>
                             <Icon name='arrow-back' />
@@ -402,7 +447,7 @@ _chooseFromDatabase = (item) => {
                       </Header>
                       <Image source = {this.state.parseSource} style = {styles.imageStyle} />
 
-                      <Button block onPress={this._post} >
+                      <Button block backgroundColor='#33ccff' onPress={this._post} >
                         <Text>Parse</Text>
                       </Button>
                     </Container>  
@@ -413,7 +458,7 @@ _chooseFromDatabase = (item) => {
                 //Render while waiting for image to be parsed
                 return (
                       <View style={styles.container3}>
-                      <Header>
+                      <Header style={{ backgroundColor: '#33ccff' }}>
                         <Left>
                           <Button transparent onPress={this._reset}>
                             <Icon name='home' />
@@ -442,7 +487,7 @@ _chooseFromDatabase = (item) => {
             return (
 
                         <View style={styles.container3} >
-                        <Header>
+                        <Header style={{ backgroundColor: '#33ccff' }}>
                         <Left>
                           <Button transparent onPress={this._reset}>
                             <Icon name='home' />
@@ -453,23 +498,50 @@ _chooseFromDatabase = (item) => {
                           
                         </Body>
                         </Header>
+                        <Content>
                             <View style={styles.boxedImage} >
                                 <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
                             </View>
-                            <Button full onPress={this._upload}>
+                            <Button full backgroundColor='#33ccff' onPress={this._upload}>
                               <Text> Upload To Database</Text>
                             </Button>
-
                             <View style={styles.buttonContainer}>
-                                {/* renderItem={({item}) => <Item regular><Input placeholder={item.Word}/><Text>{"\n"}Bounds:{"\n"}{item.Bounds}</Text></Item>} */}
+                             
                                 <FlatList
                                     data={this.state.parsedStrings}
-                                    
-                                    renderItem={({item}) => <Text>{item.Word}{"\n"}Bounds:{"\n"}{item.Bounds}</Text>}
+                                    extraData={this.state}
+                                    renderItem={({item, index}) => 
+                                    <Item regular>
+                                    <TextInput 
+                                      onChangeText={(text) => {
+                                        item.Word = text;
+                                        this.setState({
+                                            refresh: !this.state.refresh,
+                                            currentJSON: JSON.stringify(this.state.parsedStrings)
+                                            }); 
+                                        console.log(item.Word);
+                                        console.log(this.state.parsedStrings);
+                                      }} 
+                                      value={item.Word} />
+                                    <Right>
+                                      <Button backgroundColor='#33ccff' onPress={() => {
+                                        this.state.parsedStrings.splice(index,1);
+                                        console.log(index); 
+                                        console.log("Pressed");
+                                        this.setState({
+                                          refresh: !this.state.refresh,
+                                          currentJSON: JSON.stringify(this.state.parsedStrings)
+                                          }); 
+                                        }}>
+                                          <Icon name='close'/>
+                                      </Button>
+                                    </Right>
+                                    </Item>}
                                     
 
                                 />
                             </View>
+                            </Content>
                         </View>
                     );
         }

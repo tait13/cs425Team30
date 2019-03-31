@@ -550,183 +550,183 @@ _chooseFromDatabase = (item) => {
 }
 
 //Not currently used. Navigation screen for react-navigation module
-class GalleryScreen extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      checkedPermissions: false,
-      photos: [],
-    };
-  }
+// class GalleryScreen extends React.Component {
+//   constructor(props) {
+//     super(props);
+//     this.state = {
+//       checkedPermissions: false,
+//       photos: [],
+//     };
+//   }
 
 
-  render(){
+//   render(){
 
-        console.log(this.state.checkedPermissions);
-        try{
-            if(this.state.checkedPermissions !== true)
-            {
-                console.log(this.checkedPermissions);
-                this.requestExternalStoragePermission();
+//         console.log(this.state.checkedPermissions);
+//         try{
+//             if(this.state.checkedPermissions !== true)
+//             {
+//                 console.log(this.checkedPermissions);
+//                 this.requestExternalStoragePermission();
 
-                CameraRoll.getPhotos({
-                       first: 20,
-                       assetType: 'Photos',
-                     })
-                     .then(r =>
-                       this.setState({ photos: r.edges }))
-                     .catch((err) => {
-                        //Error Loading Images
-                        Alert.alert('Error Loading Images. Does the device have access to the necessary permissions.');
-                        console.log(err);
+//                 CameraRoll.getPhotos({
+//                        first: 20,
+//                        assetType: 'Photos',
+//                      })
+//                      .then(r =>
+//                        this.setState({ photos: r.edges }))
+//                      .catch((err) => {
+//                         //Error Loading Images
+//                         Alert.alert('Error Loading Images. Does the device have access to the necessary permissions.');
+//                         console.log(err);
 
-                     })
-                 this.setState({checkedPermissions : true});
-            }
-        }
-        catch (err){
-            console.warn(err);
-        }
-        console.log(this.checkedPermissions);
+//                      })
+//                  this.setState({checkedPermissions : true});
+//             }
+//         }
+//         catch (err){
+//             console.warn(err);
+//         }
+//         console.log(this.checkedPermissions);
 
-    const {navigate} = this.props.navigation;
+//     const {navigate} = this.props.navigation;
 
 
-    return(
-        <ScrollView contentContainerStyle={styles.gallery}>
+//     return(
+//         <ScrollView contentContainerStyle={styles.gallery}>
 
-          {this.state.photos.map((p,i) => {
+//           {this.state.photos.map((p,i) => {
 
-          return (
+//           return (
 
-            <Image
+//             <Image
 
-              key={i}
-              style = {{
-                width: 100,
-                height: 100,
-              }}
+//               key={i}
+//               style = {{
+//                 width: 100,
+//                 height: 100,
+//               }}
 
-              source={{ uri: p.node.image.uri}}
+//               source={{ uri: p.node.image.uri}}
 
-            />
-          );
-        })}
+//             />
+//           );
+//         })}
 
-        </ScrollView>
-      );
-    }
-  }
+//         </ScrollView>
+//       );
+//     }
+//   }
 
-class ParseScreen extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            notParsed : true,
-            imageSourceLoaded : false,
-            uri : '',
-            parsedStrings : [],
+// class ParseScreen extends React.Component {
+//     constructor(props) {
+//         super(props);
+//         this.state = {
+//             notParsed : true,
+//             imageSourceLoaded : false,
+//             uri : '',
+//             parsedStrings : [],
 
-        };
-    }
-    _upload = () => {
-        var data = new FormData();
-        console.log(this.state.imageSource);
-        console.log(this.state.imageSource.type);
-        data.append('photo', {uri: this.state.imageSource.uri, type: this.state.imageSource.type, name:'testPhoto',});
-        console.log(data);
-        data.append('imageLoc', 'serial.png');
-        return fetch('https://cs425.alextait.net/docuTest.php', {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'multipart/form-data',
-            },
-            body: data,
-        })
-        .then(response => {
-            console.log(data);
-            console.log(response);
-        });
-    }
-    _post = () =>{
-        var data = new FormData();
-        data.append('photo', {uri: this.state.imageSource.uri, type: this.state.imageSource.type, name:'testPhoto',});
-        data.append('imageLoc', 'serial.png');
+//         };
+//     }
+//     _upload = () => {
+//         var data = new FormData();
+//         console.log(this.state.imageSource);
+//         console.log(this.state.imageSource.type);
+//         data.append('photo', {uri: this.state.imageSource.uri, type: this.state.imageSource.type, name:'testPhoto',});
+//         console.log(data);
+//         data.append('imageLoc', 'serial.png');
+//         return fetch('https://cs425.alextait.net/docuTest.php', {
+//             method: 'POST',
+//             headers: {
+//                 Accept: 'application/json',
+//                 'Content-Type': 'multipart/form-data',
+//             },
+//             body: data,
+//         })
+//         .then(response => {
+//             console.log(data);
+//             console.log(response);
+//         });
+//     }
+//     _post = () =>{
+//         var data = new FormData();
+//         data.append('photo', {uri: this.state.imageSource.uri, type: this.state.imageSource.type, name:'testPhoto',});
+//         data.append('imageLoc', 'serial.png');
 
-        return fetch('https://cs425.alextait.net/docuTest.php', {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'multipart/form-data',
-            },
-            body: data
-        })
-        .then((response) => { console.log(response); return response.json();})
-        .then((receivedData) => {
-            console.log(data);
+//         return fetch('https://cs425.alextait.net/docuTest.php', {
+//             method: 'POST',
+//             headers: {
+//                 Accept: 'application/json',
+//                 'Content-Type': 'multipart/form-data',
+//             },
+//             body: data
+//         })
+//         .then((response) => { console.log(response); return response.json();})
+//         .then((receivedData) => {
+//             console.log(data);
 
-            console.log(this.state.notParsed);
-            console.log(receivedData.Strings.length);
-            this.setState({
-                notParsed: false,
-                parsedStrings: receivedData.Strings,
-                uri: receivedData.imageURL,
-            }, function(){});
-            console.log(this.state.uri);
-        })
-        .catch((error) => {
-            console.error(error);
-        });
-    }
+//             console.log(this.state.notParsed);
+//             console.log(receivedData.Strings.length);
+//             this.setState({
+//                 notParsed: false,
+//                 parsedStrings: receivedData.Strings,
+//                 uri: receivedData.imageURL,
+//             }, function(){});
+//             console.log(this.state.uri);
+//         })
+//         .catch((error) => {
+//             console.error(error);
+//         });
+//     }
 
-    render() {
-        const {navigate} = this.props.navigation;
-        const imageSource = this.props.navigation.getParam('imageSource', 'null');
-        if(this.state.imageSourceLoaded === false)
-        {
-            console.log(imageSource);
-            this.setState({imageSource: imageSource, imageSourceLoaded: true,});
-        }
-        if(this.state.notParsed)
-        {
-            return (
-                <View style={styles.container1} >
+//     render() {
+//         const {navigate} = this.props.navigation;
+//         const imageSource = this.props.navigation.getParam('imageSource', 'null');
+//         if(this.state.imageSourceLoaded === false)
+//         {
+//             console.log(imageSource);
+//             this.setState({imageSource: imageSource, imageSourceLoaded: true,});
+//         }
+//         if(this.state.notParsed)
+//         {
+//             return (
+//                 <View style={styles.container1} >
 
-                    <View style={styles.boxedImage} >
-                        <Image source={imageSource} style = {styles.imageStyle} />
-                    </View>
-                    <View style={styles.buttonContainer}>
-                        <Button
-                            title = "Parse Image"
-                            color = "#841584"
-                            onPress={this._post}
-                        />
-                    </View>
-                </View>
-            );
-        }
-        return (
+//                     <View style={styles.boxedImage} >
+//                         <Image source={imageSource} style = {styles.imageStyle} />
+//                     </View>
+//                     <View style={styles.buttonContainer}>
+//                         <Button
+//                             title = "Parse Image"
+//                             color = "#841584"
+//                             onPress={this._post}
+//                         />
+//                     </View>
+//                 </View>
+//             );
+//         }
+//         return (
 
-            <View style={styles.container3} >
-                <View style={styles.boxedImage} >
-                    <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
-                </View>
-                <View style={styles.buttonContainer}>
-                    <FlatList
-                        data={this.state.parsedStrings}
-                        renderItem={({item}) => <Text>{item.Word}{"\n"}Bounds:{"\n"}{item.Bounds}</Text>}
-                    />
-                </View>
-            </View>
-        );
-    }
-}
+//             <View style={styles.container3} >
+//                 <View style={styles.boxedImage} >
+//                     <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
+//                 </View>
+//                 <View style={styles.buttonContainer}>
+//                     <FlatList
+//                         data={this.state.parsedStrings}
+//                         renderItem={({item}) => <Text>{item.Word}{"\n"}Bounds:{"\n"}{item.Bounds}</Text>}
+//                     />
+//                 </View>
+//             </View>
+//         );
+//     }
+// }
 const AppNavigator = createStackNavigator({
   Home: {screen: HomeScreen},
   //Camera: {screen: CameraScreen},
-  Gallery: {screen: GalleryScreen},
-  Parse: {screen: ParseScreen},
+  // Gallery: {screen: GalleryScreen},
+  // Parse: {screen: ParseScreen},
 });
 
 export default createAppContainer(AppNavigator);

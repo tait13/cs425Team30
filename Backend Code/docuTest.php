@@ -65,7 +65,7 @@
         $config = ['credentials' => 'cs425-9bcc7a946012.json',    
                 ];
         
-        
+        //$context = ['languageHints' => 'en'];
         $imageAnnotator = new ImageAnnotatorClient($config);
         
         #annotate the image
@@ -82,11 +82,9 @@
 
         // printf('%d texts found:' . PHP_EOL, count($texts));
         
-        
         $yellow = imagecolorallocate($im, 255, 255, 0);
-        imagesetthickness ( $im, 10 );
+        imagesetthickness ( $im, 5 );
         $output = '{ "Strings": [';
-        
         
         foreach($annotation->getPages() as $page)
         {
@@ -109,46 +107,64 @@
                             }
                                 
                         }
-                        //$wordText = str_replace('"', $wordText, '\"');
-                        $output = $output . '{"Word": "' . ($wordText) . '",';
-                        $output = str_replace("\n", " ", $output);
                         
-                        # get bounds
-                        $vertices = $word->getBoundingBox()->getVertices();
-                        $bounds = [];
-                        $xverts = [];
-                        $yverts = [];
-                        foreach ($vertices as $vertex)
+                        //Does not output certain words if they are only a single string
+                        if($wordText != '.' and $wordText != '(' and $wordText != ')' and $wordText != '-')
                         {
-                            $bounds[] = sprintf('(%d,%d)', $vertex->getX(), $vertex->getY());
-                            $xverts[] = $vertex->getX();
-                            $yverts[] = $vertex->getY();
+                            $output = $output . '{"Word": "' . ($wordText) . '",';
+                            $output = str_replace("\n", " ", $output);
+                            
+                            # get bounds
+                            $vertices = $word->getBoundingBox()->getVertices();
+                            $bounds = [];
+                            $xverts = [];
+                            $yverts = [];
+                            foreach ($vertices as $vertex)
+                            {
+                                $bounds[] = sprintf('(%d,%d)', $vertex->getX(), $vertex->getY());
+                                $xverts[] = $vertex->getX();
+                                $yverts[] = $vertex->getY();
+                            }
+                            
+                            //Outputs rectangular bounds of parsed word
+                            $output = $output . ('"Bounds": "' . join(', ', $bounds) . '"},');
+                            
+                            //Draws a rectangle around word
+                            imagerectangle($im,$xverts[0],$yverts[0],$xverts[2],$yverts[2], $yellow);
                         }
+                        //$wordText = str_replace('"', $wordText, '\"');
                         
-                        $output = $output . ('"Bounds": "' . join(', ', $bounds) . '"},');
-                        imagerectangle($im,$xverts[0],$yverts[0],$xverts[2],$yverts[2], $yellow);
+                        
+                        
                     }
                 }
             }
         }
         
-        
         $output = rtrim($output, ',');
+
         $boxedPath = $target_dir . $baseImPath . 'Boxed.png';
         imagepng($im, $boxedPath);
+        
         
         //echo output as json object
         $output = $output . "],";
         
+        $output = $output . '"originalImage": "https://cs425.alextait.net/' . $target_dir . $baseImPath . '.png' . '",';
         $output = $output . '"imageURL": "https://cs425.alextait.net/' . $boxedPath . '"}';
        
         $imageAnnotator->close();
+        
+        //Log to file
         fwrite($log, $output);
         $text = "End Code " . date("D M d, Y G:i") . "\n";
         fwrite($log, $text);
+        
         echo($output);
 
     } catch (Exception $e) {
+        
+        //Echo exception NEEDS TO BE CONVERTED TO JSON OUTPUT SO MOBILE APP CAN HANDLE
         echo 'Caught exception: ',  $e->getMessage(), "\n";
         fwrite($log, 'Caught exception: ');
     }

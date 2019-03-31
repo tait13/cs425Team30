@@ -109,7 +109,7 @@
                         }
                         
                         //Does not output certain words if they are only a single string
-                        if($wordText != '.' and $wordText != '(' and $wordText != ')' and $wordText != '-')
+                        if($wordText != '.' and $wordText != '(' and $wordText != ')' and $wordText != '-' and $wordText != '=' and $wordText != '+' and $wordText != '_' and $wordText != '/')
                         {
                             $output = $output . '{"Word": "' . ($wordText) . '",';
                             $output = str_replace("\n", " ", $output);

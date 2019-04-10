@@ -19,7 +19,7 @@ import {
   } from 'react-native';
 import { createStackNavigator, createAppContainer } from "react-navigation";
 import ImagePicker from 'react-native-image-picker';
-import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input } from 'native-base';
+import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input, Picker, Form } from 'native-base';
 
 
 
@@ -185,8 +185,25 @@ _post = () =>{
                 parsedStrings: receivedData.Strings,
                 origUri: receivedData.originalImage,
                 uri: receivedData.imageURL,
+                wordObjArray: [],
                 currentJSON: JSON.stringify(receivedData),
             }, function(){});
+
+
+            console.log(this.state.parsedStrings.length);
+
+            //Push words to new array
+            
+            for(wordIndex = 0; wordIndex < this.state.parsedStrings.length; wordIndex++)
+            {
+              var wordObj = {Word:this.state.parsedStrings[wordIndex].Word, Bounds:this.state.parsedStrings[wordIndex].Bounds};
+              // console.log(wordObj);
+              this.state.wordObjArray.push(wordObj);
+              this.state.parsedStrings[wordIndex].selectedValueIndex = -1;
+
+            }
+            // console.log(this.state.wordObjArray);
+            console.log(this.state.parsedStrings);
             console.log(this.state.uri);
         })
         .catch((error) => {
@@ -484,6 +501,9 @@ _chooseFromDatabase = (item) => {
         else
         {
             //Render when image has been parsed and data received 
+
+            
+            
             return (
 
                         <View style={styles.container3} >
@@ -508,6 +528,7 @@ _chooseFromDatabase = (item) => {
                             <View style={styles.buttonContainer}>
                              
                                 <FlatList
+                                    
                                     data={this.state.parsedStrings}
                                     extraData={this.state}
                                     renderItem={({item, index}) => 
@@ -515,19 +536,62 @@ _chooseFromDatabase = (item) => {
                                     <TextInput 
                                       onChangeText={(text) => {
                                         item.Word = text;
+                                        this.state.wordObjArray[index].Word = text;
                                         this.setState({
                                             refresh: !this.state.refresh,
                                             currentJSON: JSON.stringify(this.state.parsedStrings)
                                             }); 
-                                        console.log(item.Word);
-                                        console.log(this.state.parsedStrings);
+                                        // console.log(item.Word);
+                                        // console.log(this.state.parsedStrings);
                                       }} 
                                       value={item.Word} />
-                                    <Right>
+                                    <Right style={{flexDirection: 'row', alignItems: 'flex-end'}}>
+                                    <Picker  mode = "dropdown" iosIcon={<Icon name="arrow-down"/>} placeholder="Select a word" 
+                                            selectedValue={this.state.parsedStrings[index].selectedValueIndex}
+                                            onValueChange={(itemValue) => {
+                                              this.state.parsedStrings[index].selectedValueIndex = itemValue;
+                                              this.setState({
+                                                refresh: !this.state.refresh,
+                                              });
+                                            }}>
+
+                                    
+                                        <Picker.Item label="Select a word" value={-1} />
+                                        {
+                                          //Map all words to each picker
+                                          this.state.wordObjArray.map(
+                                            
+                                            (strings, wordObjIndex) =>  {return <Picker.Item label={strings.Word} value={wordObjIndex}/>}
+                                          )
+                                        }
+
+                                    </Picker>
+                                    
+                                      
+                                      
+                                      
+
                                       <Button backgroundColor='#33ccff' onPress={() => {
                                         this.state.parsedStrings.splice(index,1);
+                                        this.state.wordObjArray.splice(index,1);
                                         console.log(index); 
                                         console.log("Pressed");
+
+                                        //Shift selected value index to correspond to updated array
+                                        for(parsedStringIndex = 0; parsedStringIndex < this.state.parsedStrings.length; parsedStringIndex++)
+                                        {
+                                          if(this.state.parsedStrings[parsedStringIndex].selectedValueIndex == index)
+                                          {
+                                            this.state.parsedStrings[parsedStringIndex].selectedValueIndex = -1;
+                                          }
+                                          else if(this.state.parsedStrings[parsedStringIndex].selectedValueIndex >= index)
+                                          {
+                                            this.state.parsedStrings[parsedStringIndex].selectedValueIndex--;
+                                          }
+
+                                          // console.log(this.state.parsedStrings[parsedStringIndex]);
+                                        }
+                                        
                                         this.setState({
                                           refresh: !this.state.refresh,
                                           currentJSON: JSON.stringify(this.state.parsedStrings)
@@ -536,7 +600,8 @@ _chooseFromDatabase = (item) => {
                                           <Icon name='close'/>
                                       </Button>
                                     </Right>
-                                    </Item>}
+                                    </Item>
+                                    }
                                     
 
                                 />
@@ -549,184 +614,8 @@ _chooseFromDatabase = (item) => {
   }
 }
 
-//Not currently used. Navigation screen for react-navigation module
-// class GalleryScreen extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     this.state = {
-//       checkedPermissions: false,
-//       photos: [],
-//     };
-//   }
-
-
-//   render(){
-
-//         console.log(this.state.checkedPermissions);
-//         try{
-//             if(this.state.checkedPermissions !== true)
-//             {
-//                 console.log(this.checkedPermissions);
-//                 this.requestExternalStoragePermission();
-
-//                 CameraRoll.getPhotos({
-//                        first: 20,
-//                        assetType: 'Photos',
-//                      })
-//                      .then(r =>
-//                        this.setState({ photos: r.edges }))
-//                      .catch((err) => {
-//                         //Error Loading Images
-//                         Alert.alert('Error Loading Images. Does the device have access to the necessary permissions.');
-//                         console.log(err);
-
-//                      })
-//                  this.setState({checkedPermissions : true});
-//             }
-//         }
-//         catch (err){
-//             console.warn(err);
-//         }
-//         console.log(this.checkedPermissions);
-
-//     const {navigate} = this.props.navigation;
-
-
-//     return(
-//         <ScrollView contentContainerStyle={styles.gallery}>
-
-//           {this.state.photos.map((p,i) => {
-
-//           return (
-
-//             <Image
-
-//               key={i}
-//               style = {{
-//                 width: 100,
-//                 height: 100,
-//               }}
-
-//               source={{ uri: p.node.image.uri}}
-
-//             />
-//           );
-//         })}
-
-//         </ScrollView>
-//       );
-//     }
-//   }
-
-// class ParseScreen extends React.Component {
-//     constructor(props) {
-//         super(props);
-//         this.state = {
-//             notParsed : true,
-//             imageSourceLoaded : false,
-//             uri : '',
-//             parsedStrings : [],
-
-//         };
-//     }
-//     _upload = () => {
-//         var data = new FormData();
-//         console.log(this.state.imageSource);
-//         console.log(this.state.imageSource.type);
-//         data.append('photo', {uri: this.state.imageSource.uri, type: this.state.imageSource.type, name:'testPhoto',});
-//         console.log(data);
-//         data.append('imageLoc', 'serial.png');
-//         return fetch('https://cs425.alextait.net/docuTest.php', {
-//             method: 'POST',
-//             headers: {
-//                 Accept: 'application/json',
-//                 'Content-Type': 'multipart/form-data',
-//             },
-//             body: data,
-//         })
-//         .then(response => {
-//             console.log(data);
-//             console.log(response);
-//         });
-//     }
-//     _post = () =>{
-//         var data = new FormData();
-//         data.append('photo', {uri: this.state.imageSource.uri, type: this.state.imageSource.type, name:'testPhoto',});
-//         data.append('imageLoc', 'serial.png');
-
-//         return fetch('https://cs425.alextait.net/docuTest.php', {
-//             method: 'POST',
-//             headers: {
-//                 Accept: 'application/json',
-//                 'Content-Type': 'multipart/form-data',
-//             },
-//             body: data
-//         })
-//         .then((response) => { console.log(response); return response.json();})
-//         .then((receivedData) => {
-//             console.log(data);
-
-//             console.log(this.state.notParsed);
-//             console.log(receivedData.Strings.length);
-//             this.setState({
-//                 notParsed: false,
-//                 parsedStrings: receivedData.Strings,
-//                 uri: receivedData.imageURL,
-//             }, function(){});
-//             console.log(this.state.uri);
-//         })
-//         .catch((error) => {
-//             console.error(error);
-//         });
-//     }
-
-//     render() {
-//         const {navigate} = this.props.navigation;
-//         const imageSource = this.props.navigation.getParam('imageSource', 'null');
-//         if(this.state.imageSourceLoaded === false)
-//         {
-//             console.log(imageSource);
-//             this.setState({imageSource: imageSource, imageSourceLoaded: true,});
-//         }
-//         if(this.state.notParsed)
-//         {
-//             return (
-//                 <View style={styles.container1} >
-
-//                     <View style={styles.boxedImage} >
-//                         <Image source={imageSource} style = {styles.imageStyle} />
-//                     </View>
-//                     <View style={styles.buttonContainer}>
-//                         <Button
-//                             title = "Parse Image"
-//                             color = "#841584"
-//                             onPress={this._post}
-//                         />
-//                     </View>
-//                 </View>
-//             );
-//         }
-//         return (
-
-//             <View style={styles.container3} >
-//                 <View style={styles.boxedImage} >
-//                     <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
-//                 </View>
-//                 <View style={styles.buttonContainer}>
-//                     <FlatList
-//                         data={this.state.parsedStrings}
-//                         renderItem={({item}) => <Text>{item.Word}{"\n"}Bounds:{"\n"}{item.Bounds}</Text>}
-//                     />
-//                 </View>
-//             </View>
-//         );
-//     }
-// }
 const AppNavigator = createStackNavigator({
   Home: {screen: HomeScreen},
-  //Camera: {screen: CameraScreen},
-  // Gallery: {screen: GalleryScreen},
-  // Parse: {screen: ParseScreen},
 });
 
 export default createAppContainer(AppNavigator);

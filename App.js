@@ -203,6 +203,8 @@ _post = () =>{
 
             }
             // console.log(this.state.wordObjArray);
+            console.log(this.state.parsedStrings.length);
+            console.log(this.state.wordObjArray.length);
             console.log(this.state.parsedStrings);
             console.log(this.state.uri);
         })
@@ -324,6 +326,259 @@ _chooseFromDatabase = (item) => {
               });
 }
 
+_homeScreenRender = () =>
+{
+  //Home Screen render
+  return (
+    <View style={styles.container2}>
+
+    {/* <Text style={styles.text1}>
+        {this.state.titleText}{'\n'}{'\n'}
+      </Text> */}
+      
+      <View style={styles.container1}>
+      <Image source={{uri: 'https://cs425.alextait.net/unrlogo.png'}} style = {{alignSelf: "center", width:200, height:200, marginBottom: 20, }}/>
+      
+          <Button iconLeft block backgroundColor="#66ccff" style = {{marginBottom: 2}} onPress={this._cameraButton}>
+            <Icon name="camera" />
+            <Text>  Camera</Text>
+          </Button>
+
+          <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={this._galleryButton}>
+            <Icon name="image" />
+            <Text>  Gallery</Text>
+          </Button>
+          <Button iconLeft block backgroundColor="#66ccff" style = {{marginBottom: 2}} onPress={this._database}>
+            <Text>  Previous Uploads</Text>
+          </Button>
+        
+      </View>
+    </View>
+  );
+
+}
+
+_databaseViewRender = () => 
+{
+  //Renders screen to view database entries
+  return (
+    <View style={styles.container3} >
+      <Header style={{ backgroundColor: '#33ccff' }}>
+        <Left>
+          <Button transparent onPress={this._reset}>
+            <Icon name='arrow-back' />
+            <Text> Back </Text>
+          </Button>
+        </Left>
+        <Body>
+
+        </Body>
+      </Header>
+      <View style={styles.buttonContainer}>
+          <View style={styles.centeredSmallText}>
+          <Text>Total Results: {this.state.totalRows}</Text>
+          </View>
+          <FlatList
+
+              data={this.state.retrievedData}
+              renderItem={({item}) =>
+
+
+                    <TouchableOpacity style={styles.touchableContainer} onPress={() => this._chooseFromDatabase(item)}>
+                    <View style={styles.centeredSmallText}>
+                    <Text>Creation Time: {item.creationTime}</Text>
+                    <Image source = {{uri: item.originalImageLoc}} style = {styles.imageStyle} />
+                    </View>
+                    </TouchableOpacity>
+              }
+          />
+      </View>
+  </View>
+  );
+}
+
+_singleDatabaseEntryRender = () => 
+{
+  return (
+    <View style={styles.container3} >
+    <Header style={{ backgroundColor: '#33ccff' }}>
+    <Left>
+      <Button transparent onPress={this._reset}>
+        <Icon name='home' />
+        <Text> Home </Text>
+      </Button>
+    </Left>
+    <Body>
+
+    </Body>
+    </Header>
+        <View style={styles.boxedImage} >
+            <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} />
+        </View>
+        <Text>Already in Database</Text>
+
+        <View style={styles.buttonContainer}>
+            <FlatList
+                data={this.state.parsedStrings}
+
+                renderItem={({item}) => <Text>{item.Word}{"\n"}Bounds:{"\n"}{item.Bounds}</Text>}
+
+
+            />
+        </View>
+    </View>
+  );
+}
+
+_readyToParseRender = () =>
+{
+  //Renders screen to view selected image and parse
+  return (
+    <Container>
+      <Header style={{ backgroundColor: '#33ccff' }}>
+        <Left>
+          <Button transparent onPress={this._reset}>
+            <Icon name='arrow-back' />
+            <Text> Back </Text>
+          </Button>
+        </Left>
+        <Body>
+          
+        </Body>
+      </Header>
+      <Image source = {this.state.parseSource} style = {styles.imageStyle} />
+
+      <Button block backgroundColor='#33ccff' onPress={this._post} >
+        <Text>Parse</Text>
+      </Button>
+    </Container>  
+  );
+}
+
+_waitingOnParseRender = () => 
+{
+  //Render while waiting for image to be parsed
+  return (
+    <View style={styles.container3}>
+    <Header style={{ backgroundColor: '#33ccff' }}>
+      <Left>
+        <Button transparent onPress={this._reset}>
+          <Icon name='home' />
+          <Text> Home </Text>
+        </Button>
+      </Left>
+      <Body>
+        
+      </Body>
+    </Header>
+     <Image source = {this.state.parseSource} style = {styles.imageStyle} />
+
+      <View style={styles.container2}>
+          <View style={styles.buttonContainer}>
+              <ActivityIndicator size="large" color="#0000ff" />
+           </View>
+      </View>
+    </View>
+  );
+}
+
+_imageParsedRender = () =>
+{
+  //Render when image has been parsed and data received  
+  return (
+
+    <View style={styles.container3} >
+    <Header style={{ backgroundColor: '#33ccff' }}>
+    <Left>
+      <Button transparent onPress={this._reset}>
+        <Icon name='home' />
+        <Text> Home </Text>
+      </Button>
+    </Left>
+    <Body>
+      
+    </Body>
+    </Header>
+    <Content>
+      <View style={styles.boxedImage} >
+        <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
+      </View>
+      <Button full backgroundColor='#33ccff' onPress={this._upload}>
+        <Text> Upload To Database</Text>
+      </Button>
+      <View style={styles.buttonContainer}>
+        <FlatList
+          data={this.state.parsedStrings}
+          extraData={this.state}
+          keyExtractor={(item, index) => item.Word}
+          renderItem={({item, index}) =>
+               
+          <Item regular>
+          <TextInput 
+            onChangeText={(text) => {
+              item.Word = text;
+              // this.state.wordObjArray[index].Word = text;
+              this.setState({
+                  refresh: !this.state.refresh,
+                  //currentJSON: JSON.stringify(this.state.parsedStrings)
+                  }); 
+              console.log(item.Word);
+              console.log(this.state.parsedStrings.length);
+            }} 
+            value={item.Word} />
+
+          <Right style={{flexDirection: 'row', alignItems: 'flex-end'}}>
+            <Picker  mode = "dropdown" iosIcon={<Icon name="arrow-down"/>} placeholder="Select a word" 
+                    selectedValue={this.state.parsedStrings[index].selectedValueIndex}
+                    onValueChange={(itemValue) => {
+                      this.state.parsedStrings[index].selectedValueIndex = itemValue;
+                      this.setState({
+                        refresh: !this.state.refresh,
+                      });
+                    }}>
+              <Picker.Item label="Select a word" value={-1} />  
+                {
+                  //Map all words to each picker
+                  this.state.parsedStrings.map(
+                    (strings, wordObjIndex) =>  {return <Picker.Item label={strings.Word} value={wordObjIndex}/>}
+                  )
+                }
+            </Picker>
+            <Button backgroundColor='#33ccff' onPress={() => {
+              this.state.parsedStrings.splice(index,1);
+              this.state.wordObjArray.splice(index,1);
+
+              //Shift selected value index to correspond to updated array
+              for(parsedStringIndex = 0; parsedStringIndex < this.state.parsedStrings.length; parsedStringIndex++)
+              {
+                if(this.state.parsedStrings[parsedStringIndex].selectedValueIndex == index)
+                {
+                  this.state.parsedStrings[parsedStringIndex].selectedValueIndex = -1;
+                }
+                else if(this.state.parsedStrings[parsedStringIndex].selectedValueIndex >= index)
+                {
+                  this.state.parsedStrings[parsedStringIndex].selectedValueIndex--;
+                }
+
+              }
+
+              this.setState({
+                refresh: !this.state.refresh,
+                //currentJSON: JSON.stringify(this.state.parsedStrings)
+                });
+              }}>
+              <Icon name='close'/>
+              </Button>
+            </Right>
+          </Item>
+          }
+        />
+        </View>
+        </Content>
+    </View>
+  );
+}
+
 //Render call
   render() {
 
@@ -338,106 +593,18 @@ _chooseFromDatabase = (item) => {
     //Screens available when no image is selected
         if(this.state.databaseLoaded === false)
         {
-            //Home Screen render
-            return (
-              <View style={styles.container2}>
-
-               {/* <Text style={styles.text1}>
-                  {this.state.titleText}{'\n'}{'\n'}
-                </Text> */}
-                
-                <View style={styles.container1}>
-                <Image source={{uri: 'https://cs425.alextait.net/unrlogo.png'}} style = {{alignSelf: "center", width:200, height:200, marginBottom: 20, }}/>
-                
-                    <Button iconLeft block backgroundColor="#66ccff" style = {{marginBottom: 2}} onPress={this._cameraButton}>
-                      <Icon name="camera" />
-                      <Text>  Camera</Text>
-                    </Button>
-
-                    <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={this._galleryButton}>
-                      <Icon name="image" />
-                      <Text>  Gallery</Text>
-                    </Button>
-                    <Button iconLeft block backgroundColor="#66ccff" style = {{marginBottom: 2}} onPress={this._database}>
-                      <Text>  Previous Uploads</Text>
-                    </Button>
-                  
-                </View>
-              </View>
-            );
+            return this._homeScreenRender();
         }
         else
         {
             //Renders screen to view a single chosen database entry
             if(this.state.loadedSingleObject)
             {
-              return (
-                <View style={styles.container3} >
-                <Header style={{ backgroundColor: '#33ccff' }}>
-                <Left>
-                  <Button transparent onPress={this._reset}>
-                    <Icon name='home' />
-                    <Text> Home </Text>
-                  </Button>
-                </Left>
-                <Body>
-  
-                </Body>
-                </Header>
-                    <View style={styles.boxedImage} >
-                        <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} />
-                    </View>
-                    <Text>Already in Database</Text>
-  
-                    <View style={styles.buttonContainer}>
-                        <FlatList
-                            data={this.state.parsedStrings}
-  
-                            renderItem={({item}) => <Text>{item.Word}{"\n"}Bounds:{"\n"}{item.Bounds}</Text>}
-  
-  
-                        />
-                    </View>
-                </View>
-              );
+              return this._singleDatabaseEntryRender();
             }
             else
             {
-              //Renders screen to view database entries
-              return (
-                <View style={styles.container3} >
-                   <Header style={{ backgroundColor: '#33ccff' }}>
-                     <Left>
-                       <Button transparent onPress={this._reset}>
-                         <Icon name='arrow-back' />
-                         <Text> Back </Text>
-                       </Button>
-                     </Left>
-                     <Body>
-
-                     </Body>
-                   </Header>
-                   <View style={styles.buttonContainer}>
-                       <View style={styles.centeredSmallText}>
-                       <Text>Total Results: {this.state.totalRows}</Text>
-                       </View>
-                       <FlatList
-
-                           data={this.state.retrievedData}
-                           renderItem={({item}) =>
-
-
-                                 <TouchableOpacity style={styles.touchableContainer} onPress={() => this._chooseFromDatabase(item)}>
-                                 <View style={styles.centeredSmallText}>
-                                 <Text>Creation Time: {item.creationTime}</Text>
-                                 <Image source = {{uri: item.originalImageLoc}} style = {styles.imageStyle} />
-                                 </View>
-                                 </TouchableOpacity>
-                           }
-                       />
-                   </View>
-               </View>
-             );
+              return this._databaseViewRender();
             }
             
         }
@@ -448,167 +615,17 @@ _chooseFromDatabase = (item) => {
         {
             if(this.state.postCalled === false)
             {
-                //Renders screen to view selected image and parse
-                return (
-                    <Container>
-                      <Header style={{ backgroundColor: '#33ccff' }}>
-                        <Left>
-                          <Button transparent onPress={this._reset}>
-                            <Icon name='arrow-back' />
-                            <Text> Back </Text>
-                          </Button>
-                        </Left>
-                        <Body>
-                          
-                        </Body>
-                      </Header>
-                      <Image source = {this.state.parseSource} style = {styles.imageStyle} />
-
-                      <Button block backgroundColor='#33ccff' onPress={this._post} >
-                        <Text>Parse</Text>
-                      </Button>
-                    </Container>  
-                );
+                return this._readyToParseRender();
             }
             else
             {
-                //Render while waiting for image to be parsed
-                return (
-                      <View style={styles.container3}>
-                      <Header style={{ backgroundColor: '#33ccff' }}>
-                        <Left>
-                          <Button transparent onPress={this._reset}>
-                            <Icon name='home' />
-                            <Text> Home </Text>
-                          </Button>
-                        </Left>
-                        <Body>
-                          
-                        </Body>
-                      </Header>
-                       <Image source = {this.state.parseSource} style = {styles.imageStyle} />
-
-                        <View style={styles.container2}>
-                            <View style={styles.buttonContainer}>
-                                <ActivityIndicator size="large" color="#0000ff" />
-                             </View>
-                        </View>
-                      </View>
-                    );
+                return this._waitingOnParseRender();
             }
 
         }
         else
         {
-            //Render when image has been parsed and data received 
-
-            
-            
-            return (
-
-                        <View style={styles.container3} >
-                        <Header style={{ backgroundColor: '#33ccff' }}>
-                        <Left>
-                          <Button transparent onPress={this._reset}>
-                            <Icon name='home' />
-                            <Text> Home </Text>
-                          </Button>
-                        </Left>
-                        <Body>
-                          
-                        </Body>
-                        </Header>
-                        <Content>
-                            <View style={styles.boxedImage} >
-                                <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
-                            </View>
-                            <Button full backgroundColor='#33ccff' onPress={this._upload}>
-                              <Text> Upload To Database</Text>
-                            </Button>
-                            <View style={styles.buttonContainer}>
-                             
-                                <FlatList
-                                    
-                                    data={this.state.parsedStrings}
-                                    extraData={this.state}
-                                    renderItem={({item, index}) => 
-                                    <Item regular>
-                                    <TextInput 
-                                      onChangeText={(text) => {
-                                        item.Word = text;
-                                        this.state.wordObjArray[index].Word = text;
-                                        this.setState({
-                                            refresh: !this.state.refresh,
-                                            currentJSON: JSON.stringify(this.state.parsedStrings)
-                                            }); 
-                                        // console.log(item.Word);
-                                        // console.log(this.state.parsedStrings);
-                                      }} 
-                                      value={item.Word} />
-                                    <Right style={{flexDirection: 'row', alignItems: 'flex-end'}}>
-                                    <Picker  mode = "dropdown" iosIcon={<Icon name="arrow-down"/>} placeholder="Select a word" 
-                                            selectedValue={this.state.parsedStrings[index].selectedValueIndex}
-                                            onValueChange={(itemValue) => {
-                                              this.state.parsedStrings[index].selectedValueIndex = itemValue;
-                                              this.setState({
-                                                refresh: !this.state.refresh,
-                                              });
-                                            }}>
-
-                                    
-                                        <Picker.Item label="Select a word" value={-1} />
-                                        {
-                                          //Map all words to each picker
-                                          this.state.wordObjArray.map(
-                                            
-                                            (strings, wordObjIndex) =>  {return <Picker.Item label={strings.Word} value={wordObjIndex}/>}
-                                          )
-                                        }
-
-                                    </Picker>
-                                    
-                                      
-                                      
-                                      
-
-                                      <Button backgroundColor='#33ccff' onPress={() => {
-                                        this.state.parsedStrings.splice(index,1);
-                                        this.state.wordObjArray.splice(index,1);
-                                        console.log(index); 
-                                        console.log("Pressed");
-
-                                        //Shift selected value index to correspond to updated array
-                                        for(parsedStringIndex = 0; parsedStringIndex < this.state.parsedStrings.length; parsedStringIndex++)
-                                        {
-                                          if(this.state.parsedStrings[parsedStringIndex].selectedValueIndex == index)
-                                          {
-                                            this.state.parsedStrings[parsedStringIndex].selectedValueIndex = -1;
-                                          }
-                                          else if(this.state.parsedStrings[parsedStringIndex].selectedValueIndex >= index)
-                                          {
-                                            this.state.parsedStrings[parsedStringIndex].selectedValueIndex--;
-                                          }
-
-                                          // console.log(this.state.parsedStrings[parsedStringIndex]);
-                                        }
-                                        
-                                        this.setState({
-                                          refresh: !this.state.refresh,
-                                          currentJSON: JSON.stringify(this.state.parsedStrings)
-                                          }); 
-                                        }}>
-                                          <Icon name='close'/>
-                                      </Button>
-                                    </Right>
-                                    </Item>
-                                    }
-                                    
-
-                                />
-                            </View>
-                            </Content>
-                        </View>
-                    );
+            return this._imageParsedRender();
         }
     }
   }

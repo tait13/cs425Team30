@@ -20,7 +20,7 @@ import {
 import { createStackNavigator, createAppContainer } from "react-navigation";
 import ImagePicker from 'react-native-image-picker';
 import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input, Picker, Form, Segment } from 'native-base';
-
+import fileType from 'react-native-file-type';
 
 
 class HomeScreen extends React.Component {
@@ -84,6 +84,7 @@ class HomeScreen extends React.Component {
 
   //Manages Gallery Access
   _galleryButton = () =>{
+    
       const options = {
         title: 'Select Image',
         storageOptions: {
@@ -112,8 +113,14 @@ class HomeScreen extends React.Component {
             imageSelected: true,
           });
           console.log(source);
-          console.log(this.state.parseSource.type);
-          console.log(response.type);
+          // console.log(this.state.parseSource.type);
+          // console.log(response.type);
+
+          if(this.state.parseSource.type === null)
+          {
+            fileType(this.state.parseSource.uri).then((type) => {this.state.parseSource.type = type.mime})
+          }
+          
         }
       });
 
@@ -130,12 +137,12 @@ async requestExternalStoragePermission(){
                 } else {
                     Alert.alert('Did Not Grant Permission To Access Camera Roll.')
                 }
-
+                console.log(granted);
            }
         catch (err){
             console.warn(err);
         }
-
+      
         return;
   }
 //Request permission to access android camera
@@ -161,6 +168,7 @@ async requestCameraPermission(){
 //Used to parse an image
 //Uploads image to webserver using POST call and recieves parsed data as json
 _post = () =>{
+
         this.setState({
             postCalled: true,
         });

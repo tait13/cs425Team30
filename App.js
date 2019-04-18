@@ -19,7 +19,7 @@ import {
   } from 'react-native';
 import { createStackNavigator, createAppContainer } from "react-navigation";
 import ImagePicker from 'react-native-image-picker';
-import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input, Picker, Form } from 'native-base';
+import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input, Picker, Form, Segment } from 'native-base';
 
 
 
@@ -40,6 +40,10 @@ class HomeScreen extends React.Component {
       postCalled: false,
       databaseLoaded: false,
       refresh: false,
+      valuesSaved: false,
+      names:[],
+      values:[],
+      units:[],
     };
   }
 
@@ -102,12 +106,14 @@ class HomeScreen extends React.Component {
 
           // You can also display the image using data:
           // const source = { uri: 'data:image/jpeg;base64,' + response.data };
-
+          
           this.setState({
             parseSource: source,
             imageSelected: true,
           });
           console.log(source);
+          console.log(this.state.parseSource.type);
+          console.log(response.type);
         }
       });
 
@@ -189,7 +195,7 @@ _post = () =>{
                 currentJSON: JSON.stringify(receivedData),
             }, function(){});
 
-
+            console.log(this.state.wordObjArray);
             console.log(this.state.parsedStrings.length);
 
             //Push words to new array
@@ -199,14 +205,14 @@ _post = () =>{
               var wordObj = {Word:this.state.parsedStrings[wordIndex].Word, Bounds:this.state.parsedStrings[wordIndex].Bounds};
               // console.log(wordObj);
               this.state.wordObjArray.push(wordObj);
-              this.state.parsedStrings[wordIndex].selectedValueIndex = -1;
+              this.state.parsedStrings[wordIndex].type = -1;
 
             }
             // console.log(this.state.wordObjArray);
-            console.log(this.state.parsedStrings.length);
-            console.log(this.state.wordObjArray.length);
-            console.log(this.state.parsedStrings);
-            console.log(this.state.uri);
+            // console.log(this.state.parsedStrings.length);
+            // console.log(this.state.wordObjArray.length);
+            // console.log(this.state.parsedStrings);
+            // console.log(this.state.uri);
         })
         .catch((error) => {
             console.error(error);
@@ -223,6 +229,7 @@ _reset = () => {
           databaseLoaded: false,
           refresh: false,
           loadedSingleObject: false,
+          valuesSaved: false,
       });
 }
 
@@ -482,9 +489,147 @@ _waitingOnParseRender = () =>
   );
 }
 
+_seperateWords = () =>
+{
+  this.setState({
+    valuesSaved: true,
+
+  });
+  console.log(this.state.valuesSaved);
+  console.log(this.state.names);
+  console.log(this.state.parsedStrings[0]);
+  console.log(this.state.parsedStrings[1]);
+  console.log(this.state.parsedStrings[3]);
+
+  
+  for(parsedStringIndex = 0; parsedStringIndex < this.state.parsedStrings.length; parsedStringIndex++)
+  {
+    // console.log(this.state.parsedStrings[parsedStringIndex]);
+    if(this.state.parsedStrings[parsedStringIndex].type == 1)
+    {
+      var wordObj = {Word:this.state.parsedStrings[parsedStringIndex].Word, Bounds:this.state.parsedStrings[parsedStringIndex].Bounds, valueIndex:-1, unitIndex:-1};
+      console.log(wordObj);
+      this.state.names.push(wordObj);
+    }
+    else if(this.state.parsedStrings[parsedStringIndex].type == 2)
+    {
+      var wordObj = {Word:this.state.parsedStrings[parsedStringIndex].Word, Bounds:this.state.parsedStrings[parsedStringIndex].Bounds, unitIndex:-1};
+      this.state.values.push(wordObj);
+    }
+    else if(this.state.parsedStrings[parsedStringIndex].type == 3)
+    {
+      var wordObj = {Word:this.state.parsedStrings[parsedStringIndex].Word, Bounds:this.state.parsedStrings[parsedStringIndex].Bounds, unitIndex:-1};
+      this.state.units.push(wordObj);
+    }
+  }
+
+  console.log(this.state.names);
+  console.log(this.state.values);
+  console.log(this.state.units);
+}
+
 _imageParsedRender = () =>
 {
   //Render when image has been parsed and data received  
+  return (
+
+    <View style={styles.container3} >
+    <Header style={{ backgroundColor: '#33ccff' }} hasSegment>
+    <Left>
+      <Button transparent onPress={this._reset}>
+        <Icon name='home' />
+        <Text> Home </Text>
+      </Button>
+    </Left>
+    <Body>
+      
+    </Body>
+    </Header>
+    <Content>
+      <View style={styles.boxedImage} >
+        <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
+      </View>
+      <Button full backgroundColor='#33ccff' 
+      onPress={this._seperateWords}>
+        <Text> Next </Text>
+      </Button>
+      <View style={styles.buttonContainer}>
+        <FlatList
+          data={this.state.parsedStrings}
+          extraData={this.state}
+          
+          renderItem={({item, index}) =>
+               
+          <Item regular>
+          <Input 
+            onChangeText={(text) => {
+              item.Word = text;
+              // this.state.wordObjArray[index].Word = text;
+              this.setState({
+                  refresh: !this.state.refresh,
+                  //currentJSON: JSON.stringify(this.state.parsedStrings)
+                  }); 
+              console.log(item.Word);
+              console.log(this.state.parsedStrings.length);
+            }} 
+            value={item.Word} />
+          
+          <Right style={{flexDirection: 'row', alignItems: 'flex-end'}}>
+            <Picker  mode = "dropdown" iosIcon={<Icon name="arrow-down"/>} placeholder="Select a word" 
+                    selectedValue={this.state.parsedStrings[index].type}
+                    onValueChange={(itemValue) => {
+                      this.state.parsedStrings[index].type = itemValue;
+                      this.setState({
+                        refresh: !this.state.refresh,
+                      });
+                    }}>
+              <Picker.Item label="Select a type" value={-1} />  
+              <Picker.Item label="Name" value={1} />
+              <Picker.Item label="Value" value={2} />
+              <Picker.Item label="Unit" value={3} />
+            </Picker>
+
+            
+            
+            <Button backgroundColor='#33ccff' onPress={() => {
+              this.state.parsedStrings.splice(index,1);
+              this.state.wordObjArray.splice(index,1);
+
+              //Shift selected value index to correspond to updated array
+              // for(parsedStringIndex = 0; parsedStringIndex < this.state.parsedStrings.length; parsedStringIndex++)
+              // {
+              //   if(this.state.parsedStrings[parsedStringIndex].type == index)
+              //   {
+              //     this.state.parsedStrings[parsedStringIndex].type = -1;
+              //   }
+              //   else if(this.state.parsedStrings[parsedStringIndex].type >= index)
+              //   {
+              //     this.state.parsedStrings[parsedStringIndex].type--;
+              //   }
+
+              // }
+
+              this.setState({
+                refresh: !this.state.refresh,
+                //currentJSON: JSON.stringify(this.state.parsedStrings)
+                });
+              }}>
+              <Icon name='close'/>
+              </Button>
+            </Right>
+          </Item>
+          }
+        />
+        </View>
+        </Content>
+    </View>
+  );
+}
+
+
+_parsedStringsCombiningRender = () =>
+{
+  //Render when parsed strings have been editted and erroneous values have been deleted 
   return (
 
     <View style={styles.container3} >
@@ -503,18 +648,19 @@ _imageParsedRender = () =>
       <View style={styles.boxedImage} >
         <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
       </View>
-      <Button full backgroundColor='#33ccff' onPress={this._upload}>
-        <Text> Upload To Database</Text>
+      <Button full backgroundColor='#33ccff' 
+      onPress={this._upload}>
+        <Text> Upload To Database </Text>
       </Button>
       <View style={styles.buttonContainer}>
         <FlatList
-          data={this.state.parsedStrings}
+          data={this.state.names}
           extraData={this.state}
-          keyExtractor={(item, index) => item.Word}
+          
           renderItem={({item, index}) =>
                
-          <Item regular>
-          <TextInput 
+          <Item style={{flex:1, flexDirection: 'row'}} regular>
+          <Input style={{flex:1}}
             onChangeText={(text) => {
               item.Word = text;
               // this.state.wordObjArray[index].Word = text;
@@ -523,53 +669,43 @@ _imageParsedRender = () =>
                   //currentJSON: JSON.stringify(this.state.parsedStrings)
                   }); 
               console.log(item.Word);
-              console.log(this.state.parsedStrings.length);
+              console.log(this.state.names.length);
             }} 
             value={item.Word} />
 
-          <Right style={{flexDirection: 'row', alignItems: 'flex-end'}}>
-            <Picker  mode = "dropdown" iosIcon={<Icon name="arrow-down"/>} placeholder="Select a word" 
-                    selectedValue={this.state.parsedStrings[index].selectedValueIndex}
+            <Picker style={{flex:1}} mode = "dropdown" iosIcon={<Icon name="arrow-down"/>} placeholder="Select a value" 
+                    selectedValue={this.state.names[index].valuesIndex}
                     onValueChange={(itemValue) => {
-                      this.state.parsedStrings[index].selectedValueIndex = itemValue;
+                      this.state.names[index].valuesIndex = itemValue;
                       this.setState({
                         refresh: !this.state.refresh,
                       });
                     }}>
-              <Picker.Item label="Select a word" value={-1} />  
+              <Picker.Item label="Select a value" value={-1} />  
                 {
                   //Map all words to each picker
-                  this.state.parsedStrings.map(
-                    (strings, wordObjIndex) =>  {return <Picker.Item label={strings.Word} value={wordObjIndex}/>}
+                  this.state.values.map(
+                    (strings, valueObjIndex) =>  {return <Picker.Item label={strings.Word} value={valueObjIndex}/>}
                   )
                 }
             </Picker>
-            <Button backgroundColor='#33ccff' onPress={() => {
-              this.state.parsedStrings.splice(index,1);
-              this.state.wordObjArray.splice(index,1);
-
-              //Shift selected value index to correspond to updated array
-              for(parsedStringIndex = 0; parsedStringIndex < this.state.parsedStrings.length; parsedStringIndex++)
-              {
-                if(this.state.parsedStrings[parsedStringIndex].selectedValueIndex == index)
+            <Picker style={{flex:1}}  mode = "dropdown" iosIcon={<Icon name="arrow-down"/>} placeholder="Select a unit" 
+                    selectedValue={this.state.names[index].unitIndex}
+                    onValueChange={(itemValue) => {
+                      this.state.names[index].unitIndex = itemValue;
+                      this.setState({
+                        refresh: !this.state.refresh,
+                      });
+                    }}>
+              <Picker.Item label="Select a value" value={-1} />  
                 {
-                  this.state.parsedStrings[parsedStringIndex].selectedValueIndex = -1;
+                  //Map all words to each picker
+                  this.state.units.map(
+                    (strings, unitObjIndex) =>  {return <Picker.Item label={strings.Word} value={unitObjIndex}/>}
+                  )
                 }
-                else if(this.state.parsedStrings[parsedStringIndex].selectedValueIndex >= index)
-                {
-                  this.state.parsedStrings[parsedStringIndex].selectedValueIndex--;
-                }
-
-              }
-
-              this.setState({
-                refresh: !this.state.refresh,
-                //currentJSON: JSON.stringify(this.state.parsedStrings)
-                });
-              }}>
-              <Icon name='close'/>
-              </Button>
-            </Right>
+            </Picker>
+           
           </Item>
           }
         />
@@ -578,6 +714,8 @@ _imageParsedRender = () =>
     </View>
   );
 }
+
+
 
 //Render call
   render() {
@@ -625,7 +763,15 @@ _imageParsedRender = () =>
         }
         else
         {
+          if(!this.state.valuesSaved)
+          {
             return this._imageParsedRender();
+          }
+          else
+          {
+            return this._parsedStringsCombiningRender();
+          }
+            
         }
     }
   }

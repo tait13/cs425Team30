@@ -137,7 +137,7 @@ async requestExternalStoragePermission(){
                 } else {
                     Alert.alert('Did Not Grant Permission To Access Camera Roll.')
                 }
-                console.log(granted);
+                // console.log(granted);
            }
         catch (err){
             console.warn(err);

@@ -427,8 +427,8 @@ _databaseViewRender = () =>
             <Text> Back </Text>
           </Button>
         </Left>
-        <Body>
-
+        <Body style={{justifyContent:'flex-start', marginLeft:30}}>
+          <Text style={{fontWeight: 'bold',}} >Database Entries</Text>
         </Body>
       </Header>
       <View style={styles.databaseEntries}>
@@ -446,7 +446,7 @@ _databaseViewRender = () =>
                         
                         
                         <Thumbnail square large source = {{uri: item.originalImageLoc}}  />
-                          <Text>Creation Time: {item.creationTime}{"\n"}
+                          <Text style={{marginHorizontal:7}}>Creation Time: {item.creationTime}{"\n"}
                           Name: {item.Model}{"\n"}
                           Location: Test
                           </Text>

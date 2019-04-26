@@ -19,7 +19,7 @@ import {
   } from 'react-native';
 import { createStackNavigator, createAppContainer } from "react-navigation";
 import ImagePicker from 'react-native-image-picker';
-import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input, Picker, Form, Segment } from 'native-base';
+import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input, Picker, Form, Segment, Thumbnail, Card, CardItem } from 'native-base';
 import fileType from 'react-native-file-type';
 
 
@@ -431,21 +431,26 @@ _databaseViewRender = () =>
 
         </Body>
       </Header>
-      <View style={styles.buttonContainer}>
-          <View style={styles.centeredSmallText}>
+      <View style={styles.databaseEntries}>
+          {/* <View style={styles.centeredSmallText}>
           <Text>Total Results: {this.state.totalRows}</Text>
-          </View>
+          </View> */}
           <FlatList
 
               data={this.state.retrievedData}
               renderItem={({item}) =>
 
-
+                  
                     <TouchableOpacity style={styles.touchableContainer} onPress={() => this._chooseFromDatabase(item)}>
-                    <View style={styles.centeredSmallText}>
-                    <Text>Creation Time: {item.creationTime}</Text>
-                    <Image source = {{uri: item.originalImageLoc}} style = {styles.imageStyle} />
-                    </View>
+                      <Card style={styles.cardContainer}>
+                        
+                        
+                        <Thumbnail square large source = {{uri: item.originalImageLoc}}  />
+                          <Text>Creation Time: {item.creationTime}{"\n"}
+                          Name: {item.Model}{"\n"}
+                          Location: Test
+                          </Text>
+                      </Card>
                     </TouchableOpacity>
               }
           />
@@ -457,32 +462,43 @@ _databaseViewRender = () =>
 _singleDatabaseEntryRender = () => 
 {
   return (
-    <View style={styles.container3} >
-    <Header style={{ backgroundColor: '#33ccff' }}>
-    <Left>
-      <Button transparent onPress={this._reset}>
-        <Icon name='home' />
-        <Text> Home </Text>
-      </Button>
-    </Left>
-    <Body>
+    <Container>
+      <Header style={{ backgroundColor: '#33ccff' }}>
+        <Left>
+          <Button transparent onPress={this._reset}>
+            <Icon name='home' />
+            <Text> Home </Text>
+          </Button>
+        </Left>
+        <Body>
+        </Body>
+      </Header>
+      <Content style={styles.singleDatabaseEntry}>
+        <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+        <FlatList
+                  data={this.state.parsedStrings}
 
-    </Body>
-    </Header>
-        <View style={styles.boxedImage} >
-            <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain" resizeMethod="scale"/>
-        </View>
-
-        <View style={styles.buttonContainer}>
-            <FlatList
-                data={this.state.parsedStrings}
-
-                renderItem={({item}) => <Text>{item.EntryName.Word}: {item.Value.Word} {item.Unit.Word}</Text>}
+                  renderItem={({item}) => <Text style={{fontWeight: 'bold', marginHorizontal:15,}}>{item.EntryName.Word}:<Text style={{fontWeight: '400'}}> {item.Value.Word} {item.Unit.Word}</Text></Text>}
 
 
-            />
-        </View>
-    </View>
+              />
+        {/* <View style={{flexDirection:"column", alignItems:"flex-start"}}>
+          <View >
+              <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+          </View>
+
+          <View style={styles.buttonContainer}>
+              <FlatList
+                  data={this.state.parsedStrings}
+
+                  renderItem={({item}) => <Text>{item.EntryName.Word}: {item.Value.Word} {item.Unit.Word}</Text>}
+
+
+              />
+          </View>
+        </View> */}
+      </Content>
+    </Container>
   );
 }
 
@@ -918,11 +934,33 @@ const styles = StyleSheet.create({
   },
   imageStyle: {
     width: Dimensions.get('window').width ,
-    height: Dimensions.get('window').width,
+    height: Dimensions.get('window').width * 9 / 16,
     marginTop: 5,
   },
   touchableContainer: {
-    backgroundColor: '#DDDDDD',
-
+    
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  databaseEntries: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    alignSelf: 'center',
+    justifyContent: 'center',
+  },
+  cardContainer: {
+    
+    flexDirection: 'row',
+    alignItems:'flex-start',
+    alignSelf:'center',
+    justifyContent:'flex-start',
+    width: Dimensions.get('window').width - 18,
+  },
+  singleDatabaseEntry: {
+    justifyContent:'flex-start',
+    alignItems:'flex-start',
+    alignSelf:'center',
   },
 });

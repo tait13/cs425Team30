@@ -19,7 +19,7 @@ import {
   } from 'react-native';
 import { createStackNavigator, createAppContainer } from "react-navigation";
 import ImagePicker from 'react-native-image-picker';
-import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input, Picker, Form, Segment } from 'native-base';
+import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input, Picker, Form, Segment, Thumbnail, Card, CardItem } from 'native-base';
 import fileType from 'react-native-file-type';
 
 
@@ -44,6 +44,7 @@ class HomeScreen extends React.Component {
       names:[],
       values:[],
       units:[],
+      doneLoadingEntry: false,
     };
   }
 
@@ -137,7 +138,7 @@ async requestExternalStoragePermission(){
                 } else {
                     Alert.alert('Did Not Grant Permission To Access Camera Roll.')
                 }
-                console.log(granted);
+                // console.log(granted);
            }
         catch (err){
             console.warn(err);
@@ -238,7 +239,13 @@ _reset = () => {
           refresh: false,
           loadedSingleObject: false,
           valuesSaved: false,
+          names: [],
+          values: [],
+          units: [],
+          doneLoadingEntry: false,
       });
+
+
 }
 
 //Accesses database to view every upload asset
@@ -275,8 +282,39 @@ _database = () => {
       });
 }
 
+async _createCurrentJSON()
+{
+  console.log(this.state.names);
+  console.log(this.state.values);
+  console.log(this.state.units);
+
+  console.log(JSON.stringify(this.state.names));
+
+  
+  
+}
+
 //Uploads asset data to the database
 _upload = () => {
+
+      var tmpJSONObj = [];
+
+      for(entryIndex = 0; entryIndex < this.state.names.length; entryIndex++)
+      {
+        if(this.state.names[entryIndex].unitIndex != -1)
+        {
+          tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: this.state.units[this.state.names[entryIndex].unitIndex]});
+        }
+        else
+        {
+          tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: {Word: null}});
+        }
+        
+      }
+      console.log(tmpJSONObj);
+
+      this.state.currentJSON = JSON.stringify(tmpJSONObj);
+
       var data = new FormData();
       data.append('originalImageLoc', this.state.origUri);
       data.append('boxedImageLoc', this.state.uri);
@@ -326,15 +364,19 @@ _chooseFromDatabase = (item) => {
                   console.log(data);
                   console.log(receivedData);
 
-                  this.setState({
-                      creationTime: receivedData.creationTime,
-                      originalImageLoc: receivedData.originalImageLoc,
-                      boxedImageLoc: receivedData.boxedImageLoc,
-                      parsedStrings: JSON.parse(receivedData.assetJSON),
-                      
-                  }, function(){});
+                  
+                  this.state.parsedStrings = JSON.parse(receivedData.assetJSON);
+                  
+                  
 
-                  console.log(this.state.parsedStrings);
+                  this.setState({
+                    creationTime: receivedData.creationTime,
+                    originalImageLoc: receivedData.originalImageLoc,
+                    boxedImageLoc: receivedData.boxedImageLoc,
+                    doneLoadingEntry: true,
+                    
+                }, function(){});
+                console.log(this.state.parsedStrings);
               })
               .catch((error) => {
                   console.error(error);
@@ -385,25 +427,30 @@ _databaseViewRender = () =>
             <Text> Back </Text>
           </Button>
         </Left>
-        <Body>
-
+        <Body style={{justifyContent:'flex-start', marginLeft:30}}>
+          <Text style={{fontWeight: 'bold',}} >Database Entries</Text>
         </Body>
       </Header>
-      <View style={styles.buttonContainer}>
-          <View style={styles.centeredSmallText}>
+      <View style={styles.databaseEntries}>
+          {/* <View style={styles.centeredSmallText}>
           <Text>Total Results: {this.state.totalRows}</Text>
-          </View>
+          </View> */}
           <FlatList
 
               data={this.state.retrievedData}
               renderItem={({item}) =>
 
-
+                  
                     <TouchableOpacity style={styles.touchableContainer} onPress={() => this._chooseFromDatabase(item)}>
-                    <View style={styles.centeredSmallText}>
-                    <Text>Creation Time: {item.creationTime}</Text>
-                    <Image source = {{uri: item.originalImageLoc}} style = {styles.imageStyle} />
-                    </View>
+                      <Card style={styles.cardContainer}>
+                        
+                        
+                        <Thumbnail square large source = {{uri: item.originalImageLoc}}  />
+                          <Text style={{marginHorizontal:7}}>Creation Time: {item.creationTime}{"\n"}
+                          Name: {item.Model}{"\n"}
+                          Location: Test
+                          </Text>
+                      </Card>
                     </TouchableOpacity>
               }
           />
@@ -415,33 +462,43 @@ _databaseViewRender = () =>
 _singleDatabaseEntryRender = () => 
 {
   return (
-    <View style={styles.container3} >
-    <Header style={{ backgroundColor: '#33ccff' }}>
-    <Left>
-      <Button transparent onPress={this._reset}>
-        <Icon name='home' />
-        <Text> Home </Text>
-      </Button>
-    </Left>
-    <Body>
+    <Container>
+      <Header style={{ backgroundColor: '#33ccff' }}>
+        <Left>
+          <Button transparent onPress={this._reset}>
+            <Icon name='home' />
+            <Text> Home </Text>
+          </Button>
+        </Left>
+        <Body>
+        </Body>
+      </Header>
+      <Content style={styles.singleDatabaseEntry}>
+        <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+        <FlatList
+                  data={this.state.parsedStrings}
 
-    </Body>
-    </Header>
-        <View style={styles.boxedImage} >
-            <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} />
-        </View>
-        <Text>Already in Database</Text>
-
-        <View style={styles.buttonContainer}>
-            <FlatList
-                data={this.state.parsedStrings}
-
-                renderItem={({item}) => <Text>{item.Word}{"\n"}Bounds:{"\n"}{item.Bounds}</Text>}
+                  renderItem={({item}) => <Text style={{fontWeight: 'bold', marginHorizontal:15,}}>{item.EntryName.Word}:<Text style={{fontWeight: '400'}}> {item.Value.Word} {item.Unit.Word}</Text></Text>}
 
 
-            />
-        </View>
-    </View>
+              />
+        {/* <View style={{flexDirection:"column", alignItems:"flex-start"}}>
+          <View >
+              <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+          </View>
+
+          <View style={styles.buttonContainer}>
+              <FlatList
+                  data={this.state.parsedStrings}
+
+                  renderItem={({item}) => <Text>{item.EntryName.Word}: {item.Value.Word} {item.Unit.Word}</Text>}
+
+
+              />
+          </View>
+        </View> */}
+      </Content>
+    </Container>
   );
 }
 
@@ -461,11 +518,17 @@ _readyToParseRender = () =>
           
         </Body>
       </Header>
-      <Image source = {this.state.parseSource} style = {styles.imageStyle} />
-
-      <Button block backgroundColor='#33ccff' onPress={this._post} >
-        <Text>Parse</Text>
-      </Button>
+      <Content>
+      <Image source = {this.state.parseSource} style = {styles.imageStyle} resizeMode={"contain"}/>
+      
+      </Content>
+      <Footer>
+        <FooterTab>
+          <Button block backgroundColor='#33ccff' onPress={this._post} >
+            <Text>Parse</Text>
+          </Button>
+        </FooterTab>
+      </Footer>
     </Container>  
   );
 }
@@ -486,7 +549,34 @@ _waitingOnParseRender = () =>
         
       </Body>
     </Header>
-     <Image source = {this.state.parseSource} style = {styles.imageStyle} />
+     <Image source = {this.state.parseSource} style = {styles.imageStyle} resizeMode={"contain"}/>
+
+      <View style={styles.container2}>
+          <View style={styles.buttonContainer}>
+              <ActivityIndicator size="large" color="#0000ff" />
+           </View>
+      </View>
+    </View>
+  );
+}
+
+_genericLoadingRender = () => 
+{
+  //Render while waiting for image to be parsed
+  return (
+    <View style={styles.container3}>
+    <Header style={{ backgroundColor: '#33ccff' }}>
+      <Left>
+        <Button transparent onPress={this._reset}>
+          <Icon name='home' />
+          <Text> Home </Text>
+        </Button>
+      </Left>
+      <Body>
+        
+      </Body>
+    </Header>
+     
 
       <View style={styles.container2}>
           <View style={styles.buttonContainer}>
@@ -516,17 +606,17 @@ _seperateWords = () =>
     if(this.state.parsedStrings[parsedStringIndex].type == 1)
     {
       var wordObj = {Word:this.state.parsedStrings[parsedStringIndex].Word, Bounds:this.state.parsedStrings[parsedStringIndex].Bounds, valueIndex:-1, unitIndex:-1};
-      console.log(wordObj);
+      // console.log(wordObj);
       this.state.names.push(wordObj);
     }
     else if(this.state.parsedStrings[parsedStringIndex].type == 2)
     {
-      var wordObj = {Word:this.state.parsedStrings[parsedStringIndex].Word, Bounds:this.state.parsedStrings[parsedStringIndex].Bounds, unitIndex:-1};
+      var wordObj = {Word:this.state.parsedStrings[parsedStringIndex].Word, Bounds:this.state.parsedStrings[parsedStringIndex].Bounds};
       this.state.values.push(wordObj);
     }
     else if(this.state.parsedStrings[parsedStringIndex].type == 3)
     {
-      var wordObj = {Word:this.state.parsedStrings[parsedStringIndex].Word, Bounds:this.state.parsedStrings[parsedStringIndex].Bounds, unitIndex:-1};
+      var wordObj = {Word:this.state.parsedStrings[parsedStringIndex].Word, Bounds:this.state.parsedStrings[parsedStringIndex].Bounds};
       this.state.units.push(wordObj);
     }
   }
@@ -682,9 +772,9 @@ _parsedStringsCombiningRender = () =>
             value={item.Word} />
 
             <Picker style={{flex:1}} mode = "dropdown" iosIcon={<Icon name="arrow-down"/>} placeholder="Select a value" 
-                    selectedValue={this.state.names[index].valuesIndex}
+                    selectedValue={this.state.names[index].valueIndex}
                     onValueChange={(itemValue) => {
-                      this.state.names[index].valuesIndex = itemValue;
+                      this.state.names[index].valueIndex = itemValue;
                       this.setState({
                         refresh: !this.state.refresh,
                       });
@@ -746,7 +836,15 @@ _parsedStringsCombiningRender = () =>
             //Renders screen to view a single chosen database entry
             if(this.state.loadedSingleObject)
             {
-              return this._singleDatabaseEntryRender();
+              if(!this.state.doneLoadingEntry)
+              {
+                return this._genericLoadingRender();
+              }
+              else
+              {
+                return this._singleDatabaseEntryRender();
+              }
+              
             }
             else
             {
@@ -836,10 +934,33 @@ const styles = StyleSheet.create({
   },
   imageStyle: {
     width: Dimensions.get('window').width ,
-    height:200
+    height: Dimensions.get('window').width * 9 / 16,
+    marginTop: 5,
   },
   touchableContainer: {
-    backgroundColor: '#DDDDDD',
-
+    
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  databaseEntries: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    alignSelf: 'center',
+    justifyContent: 'center',
+  },
+  cardContainer: {
+    
+    flexDirection: 'row',
+    alignItems:'flex-start',
+    alignSelf:'center',
+    justifyContent:'flex-start',
+    width: Dimensions.get('window').width - 18,
+  },
+  singleDatabaseEntry: {
+    justifyContent:'flex-start',
+    alignItems:'flex-start',
+    alignSelf:'center',
   },
 });

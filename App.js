@@ -16,10 +16,11 @@ import {
   TouchableHighlight,
   TouchableOpacity,
   TextInput,
+  Modal,
   } from 'react-native';
 import { createStackNavigator, createAppContainer } from "react-navigation";
 import ImagePicker from 'react-native-image-picker';
-import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input, Picker, Form, Segment, Thumbnail, Card, CardItem } from 'native-base';
+import { Container, Root, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input, Picker, Form, Segment, Thumbnail, Card, CardItem, Toast } from 'native-base';
 import fileType from 'react-native-file-type';
 
 
@@ -30,10 +31,10 @@ class HomeScreen extends React.Component {
     };
 
   //Default constructor for Home Screen
+  //Sets Global Variables
   constructor(props) {
     super(props);
     this.state = {
-      titleText: "Please choose how you would like to load an image.",
       imageSelected: false,
       notParsed: true,
       test: false,
@@ -51,6 +52,10 @@ class HomeScreen extends React.Component {
       entryType: '',
       Manufacturer: '',
       Location: '',
+      addNewModalVisible: false,
+      newName: '',
+      newValue: '',
+      newUnit: '',
     };
   }
 
@@ -174,11 +179,13 @@ async requestCameraPermission(){
 
 //Used to parse an image
 //Uploads image to webserver using POST call and recieves parsed data as json
-_post = () =>{
+_sendImageToOCR = () =>{
 
         this.setState({
             postCalled: true,
         });
+
+        //Create Form to Post
         var data = new FormData();
         data.append('photo', {uri: this.state.parseSource.uri, type: this.state.parseSource.type, name:'testPhoto',});
         data.append('imageLoc', 'serial.png');
@@ -214,20 +221,13 @@ _post = () =>{
             console.log(this.state.parsedStrings.length);
 
             //Push words to new array
-            
             for(wordIndex = 0; wordIndex < this.state.parsedStrings.length; wordIndex++)
             {
               var wordObj = {Word:this.state.parsedStrings[wordIndex].Word, Bounds:this.state.parsedStrings[wordIndex].Bounds};
-              // console.log(wordObj);
               this.state.wordObjArray.push(wordObj);
               this.state.parsedStrings[wordIndex].type = -1;
 
             }
-            // console.log(this.state.wordObjArray);
-            // console.log(this.state.parsedStrings.length);
-            // console.log(this.state.wordObjArray.length);
-            // console.log(this.state.parsedStrings);
-            // console.log(this.state.uri);
         })
         .catch((error) => {
             console.error(error);
@@ -255,6 +255,7 @@ _reset = () => {
           entryType: "",
           Manufacturer: '',
           Location: '',
+          retrievedData: [],
           
       });
 
@@ -295,41 +296,50 @@ _database = () => {
       });
 }
 
-async _createCurrentJSON()
-{
-  console.log(this.state.names);
-  console.log(this.state.values);
-  console.log(this.state.units);
 
-  console.log(JSON.stringify(this.state.names));
-
-  
-  
-}
-
+//Adds each formatted value to a json string to be passed to database
 _saveJSON = () => {
-  var tmpJSONObj = [];
+
+  var allEntriesHaveValue = true;
 
   for(entryIndex = 0; entryIndex < this.state.names.length; entryIndex++)
   {
-    if(this.state.names[entryIndex].unitIndex != -1)
+    if(this.state.names[entryIndex].valueIndex == -1)
     {
-      tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: this.state.units[this.state.names[entryIndex].unitIndex]});
+      allEntriesHaveValue = false;
     }
-    else
-    {
-      tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: {Word: null}});
-    }
-    
   }
-  console.log(tmpJSONObj);
 
-  this.state.currentJSON = JSON.stringify(tmpJSONObj);
+  if(allEntriesHaveValue)
+  {
+    var tmpJSONObj = [];
 
+    for(entryIndex = 0; entryIndex < this.state.names.length; entryIndex++)
+    {
+      if(this.state.names[entryIndex].unitIndex != -1)
+      {
+        tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: this.state.units[this.state.names[entryIndex].unitIndex]});
+      }
+      else
+      {
+        tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: {Word: null}});
+      }
+      
+    }
+    console.log(tmpJSONObj);
+
+    this.state.currentJSON = JSON.stringify(tmpJSONObj);
+
+    
+    this.setState({
+      JSONSaved: true,
+    }, function(){});
+  }
+  else
+  {
+    Alert.alert('An entry is missing a value!', 'Please ensure all entries have a corresponding value.');
+  }
   
-  this.setState({
-    JSONSaved: true,
-  }, function(){});
 
 }
 
@@ -337,7 +347,12 @@ _saveJSON = () => {
 _upload = () => {
 
       
-
+    if(this.state.entryName === "" || this.state.entryType === "" || this.state.Location === "" || this.state.Manufacturer === "")
+    {
+      Alert.alert('Please Fill Out All Fields');
+    }
+    else
+    {
       var data = new FormData();
       data.append('originalImageLoc', this.state.origUri);
       data.append('boxedImageLoc', this.state.uri);
@@ -363,11 +378,53 @@ _upload = () => {
                   .catch((error) => {
                       console.error(error);
                   });
+    }
 }
 
-_uploadTest = () => {
-  console.log(this.state.entryName);
-  console.log(this.state.entryType);
+//Calls backend to delete an item from the database
+_deleteFromDatabase = (item) => {
+
+  Alert.alert('Are you sure you would like to delete this entry?',
+  'This action is irreversable.',
+    [{text: 'Cancel', onPress: () => console.log('Cancelled'), style:'cancel',},
+      {text: 'Delete', onPress: () => {
+          var data = new FormData();
+          data.append('creationTime', this.state.creationTime);
+
+          return fetch('https://cs425.alextait.net/deleteEntry.php', {
+              method: 'POST',
+              headers: {
+                  Accept: 'text/plain',
+                  'Content-Type': 'multipart/form-data',
+              },
+              body: data
+          })
+          .then((response) => { return response.text();}).then((text) => 
+          {
+            this.state.retrievedData = [];
+            this._database();
+
+            console.log(text);
+            this.setState({
+              doneLoadingEntry: false,
+              loadedSingleObject: false,
+            }, function(){});
+
+            
+            
+
+            return text;
+          })
+          .catch((error) => {
+              console.error(error);
+          });
+      },},
+    ],
+    {cancelable: false},
+
+  );
+
+  
 }
 
 //Passes creation time of selected asset to the server to retrieve its' parsed data
@@ -414,31 +471,82 @@ _chooseFromDatabase = (item) => {
               });
 }
 
+//Changes state of modal visible
+_setModalVisible = (newState) =>
+{
+  this.setState({
+    addNewModalVisible: newState,
+    
+}, function(){});
+  console.log(this.state.addNewModalVisible);
+} 
+
+
+//Adds a new name value and unit based on text entered into modal
+_addNewEntry = () =>
+{
+  if(this.state.newName ==="" && this.state.newValue ==="")
+  {
+    Alert.alert('No text for Name or Value Entered');
+  }
+  else if(this.state.newName ==="")
+  {
+    Alert.alert('No text for Name Entered');
+  }
+  else if(this.state.newValue ==="")
+  {
+    Alert.alert('No text for Value Entered');
+  }
+  else
+  {
+
+    this._setModalVisible(false);
+
+    var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:this.state.values.length, unitIndex:this.state.units.length};
+    this.state.names.push(wordObj);
+
+    wordObj = {Word:this.state.newValue, Bounds:null};
+    this.state.values.push(wordObj);
+    wordObj = {Word:this.state.newUnit, Bounds:null};
+    this.state.units.push(wordObj);
+
+    this.setState({
+      newName: "",
+      newValue: "",
+      newUnit: "",
+      refresh: !this.state.refresh,
+    }, function(){});
+  }
+    
+}
 _homeScreenRender = () =>
 {
   //Home Screen render
   return (
     <View style={styles.container2}>
-
-    {/* <Text style={styles.text1}>
-        {this.state.titleText}{'\n'}{'\n'}
-      </Text> */}
       
       <View style={styles.container1}>
-      <Image source={{uri: 'https://cs425.alextait.net/unrlogo.png'}} style = {{alignSelf: "center", width:200, height:200, marginBottom: 20, }}/>
+      <Text style={{alignSelf:"center", fontSize:30, textAlign: 'center',fontWeight:'bold'}}>Asset Configuration Through Images</Text>
+      <Image source={{uri: 'https://cs425.alextait.net/unrlogo.png'}} style = {{alignSelf: "center", width:200, height:200, marginBottom: 20, marginTop: 20}}/>
       
           <Button iconLeft block backgroundColor="#66ccff" style = {{marginBottom: 2}} onPress={this._cameraButton}>
             <Icon name="camera" />
-            <Text>  Camera</Text>
+            <Text style={{fontWeight:'bold'}}>  Camera</Text>
           </Button>
 
           <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={this._galleryButton}>
             <Icon name="image" />
-            <Text>  Gallery</Text>
+            <Text style={{fontWeight:'bold'}}>  Gallery</Text>
           </Button>
           <Button iconLeft block backgroundColor="#66ccff" style = {{marginBottom: 2}} onPress={this._database}>
-            <Text>  Previous Uploads</Text>
+            <Icon name="cloud"/>
+            <Text style={{fontWeight:'bold'}}>  Previous Uploads</Text>
           </Button>
+          {/* <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() => this._setModalVisible(true)}>
+            <Text>  Test</Text>
+          </Button> */}
+
+          
         
       </View>
     </View>
@@ -458,8 +566,8 @@ _databaseViewRender = () =>
             <Text> Back </Text>
           </Button>
         </Left>
-        <Body style={{justifyContent:'flex-start', marginLeft:30}}>
-          <Text style={{fontWeight: 'bold',}} >Database Entries</Text>
+        <Body style={{justifyContent:'flex-start', marginLeft:10}}>
+          <Text style={{fontWeight: 'bold', fontSize:20}} >Database Entries</Text>
         </Body>
       </Header>
       <View style={styles.databaseEntries}>
@@ -498,9 +606,16 @@ _singleDatabaseEntryRender = () =>
     <Container>
       <Header style={{ backgroundColor: '#33ccff' }}>
         <Left>
-          <Button transparent onPress={this._reset}>
-            <Icon name='home' />
-            <Text> Home </Text>
+          <Button transparent onPress={() => {
+            this._database();
+            this.setState({
+            doneLoadingEntry: false,
+            loadedSingleObject: false,
+          });
+          
+          }}>
+            <Icon name='arrow-back' />
+            <Text> Back </Text>
           </Button>
         </Left>
         <Body>
@@ -508,6 +623,9 @@ _singleDatabaseEntryRender = () =>
       </Header>
       <Content style={styles.singleDatabaseEntry}>
         <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+        <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() =>{this._deleteFromDatabase(this.state.creationTime)} }>
+          <Text>Delete From Database</Text>
+        </Button>
         <FlatList
                   data={this.state.parsedStrings}
 
@@ -557,7 +675,7 @@ _readyToParseRender = () =>
       </Content>
       <Footer>
         <FooterTab>
-          <Button block backgroundColor='#33ccff' onPress={this._post} >
+          <Button block backgroundColor='#33ccff' onPress={this._sendImageToOCR} >
             <Text>Parse</Text>
           </Button>
         </FooterTab>
@@ -595,15 +713,12 @@ _waitingOnParseRender = () =>
 
 _genericLoadingRender = () => 
 {
-  //Render while waiting for image to be parsed
+  //Displays an activity indicator in the center of the screen
   return (
     <View style={styles.container3}>
     <Header style={{ backgroundColor: '#33ccff' }}>
       <Left>
-        <Button transparent onPress={this._reset}>
-          <Icon name='home' />
-          <Text> Home </Text>
-        </Button>
+        
       </Left>
       <Body>
         
@@ -620,26 +735,20 @@ _genericLoadingRender = () =>
   );
 }
 
+//Seperates all parsed words into their proper arrays (names, values, units)
 _seperateWords = () =>
 {
   this.setState({
     valuesSaved: true,
 
   });
-  console.log(this.state.valuesSaved);
-  console.log(this.state.names);
-  console.log(this.state.parsedStrings[0]);
-  console.log(this.state.parsedStrings[1]);
-  console.log(this.state.parsedStrings[3]);
 
-  
+  //Loop through each word and create new word object in proper arrays
   for(parsedStringIndex = 0; parsedStringIndex < this.state.parsedStrings.length; parsedStringIndex++)
   {
-    // console.log(this.state.parsedStrings[parsedStringIndex]);
     if(this.state.parsedStrings[parsedStringIndex].type == 1)
     {
       var wordObj = {Word:this.state.parsedStrings[parsedStringIndex].Word, Bounds:this.state.parsedStrings[parsedStringIndex].Bounds, valueIndex:-1, unitIndex:-1};
-      // console.log(wordObj);
       this.state.names.push(wordObj);
     }
     else if(this.state.parsedStrings[parsedStringIndex].type == 2)
@@ -654,9 +763,6 @@ _seperateWords = () =>
     }
   }
 
-  console.log(this.state.names);
-  console.log(this.state.values);
-  console.log(this.state.units);
 }
 
 _imageParsedRender = () =>
@@ -726,23 +832,8 @@ _imageParsedRender = () =>
               this.state.parsedStrings.splice(index,1);
               this.state.wordObjArray.splice(index,1);
 
-              //Shift selected value index to correspond to updated array
-              // for(parsedStringIndex = 0; parsedStringIndex < this.state.parsedStrings.length; parsedStringIndex++)
-              // {
-              //   if(this.state.parsedStrings[parsedStringIndex].type == index)
-              //   {
-              //     this.state.parsedStrings[parsedStringIndex].type = -1;
-              //   }
-              //   else if(this.state.parsedStrings[parsedStringIndex].type >= index)
-              //   {
-              //     this.state.parsedStrings[parsedStringIndex].type--;
-              //   }
-
-              // }
-
               this.setState({
                 refresh: !this.state.refresh,
-                //currentJSON: JSON.stringify(this.state.parsedStrings)
                 });
               }}>
               <Icon name='close'/>
@@ -779,10 +870,17 @@ _parsedStringsCombiningRender = () =>
       <View style={styles.boxedImage} >
         <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
       </View>
-      <Button full backgroundColor='#33ccff' 
-      onPress={this._saveJSON}>
-        <Text> Next </Text>
-      </Button>
+      <View style={{flexDirection:'row',justifyContent:'space-evenly'}}>
+        <Button full backgroundColor='#33ccff' 
+        onPress={() => this._setModalVisible(true)} style={{width:(Dimensions.get('window').width/2), marginRight:2}}>
+          <Text> Add New Entry </Text>
+        </Button>
+        <Button full  backgroundColor='#33ccff' 
+        onPress={this._saveJSON} style={{width:(Dimensions.get('window').width/2), marginLeft:2}}>
+          <Text> Next </Text>
+        </Button>
+        
+      </View>
       <View style={styles.buttonContainer}>
         <FlatList
           data={this.state.names}
@@ -842,6 +940,27 @@ _parsedStringsCombiningRender = () =>
         />
         </View>
         </Content>
+
+        <Modal animationType="slide" visible={this.state.addNewModalVisible}
+            transparent={true} presentationStyle="formSheet" onRequestClose={() => {this._setModalVisible(false);}}
+          >
+          <View style={{backgroundColor:'#ffffff',
+            width:'100%',
+            position: 'absolute',
+            bottom: 0,
+      }}>
+            <Button block backgroundColor="#33ccff" onPress={this._addNewEntry}><Text>Save</Text></Button>
+            <Item >
+              <Input  placeholder="Name" onChangeText={(text) => {this.state.newName = text}}></Input>
+            </Item>
+            <Item>
+              <Input  placeholder="Value" onChangeText={(text) => {this.state.newValue = text}} ></Input>
+            </Item>
+            <Item>
+              <Input  placeholder="Unit" onChangeText={(text) => {this.state.newUnit = text}}></Input>
+            </Item>
+          </View>
+      </Modal>
     </View>
   );
 }
@@ -879,6 +998,7 @@ _saveEntryRender = () =>
             entryType: itemValue,
           });}}
         >
+          <Picker.Item label="Select a Type" value={""}/>
           <Picker.Item label="Motor" value={"Motor"}/>
           <Picker.Item label="Pump" value={"Pump"}/>
           <Picker.Item label="Fan" value={"Fan"}/>
@@ -887,7 +1007,7 @@ _saveEntryRender = () =>
           <Picker.Item label="Compressor" value={"Compressor"}/>
         </Picker>
       </Item>
-      <Item success>
+      <Item >
         <Input  placeholder="Name" onChangeText={(text) => {this.state.entryName = text}}></Input>
       </Item>
       <Item>
@@ -983,7 +1103,7 @@ const AppNavigator = createStackNavigator({
   Home: {screen: HomeScreen},
 });
 
-export default createAppContainer(AppNavigator);
+export default (createAppContainer(AppNavigator));
 
 
 
@@ -995,7 +1115,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 20,
     marginRight: 20,
-    marginTop: 150,
+    marginTop: 50,
   },
   container2: {
     flex: 1,

@@ -45,6 +45,12 @@ class HomeScreen extends React.Component {
       values:[],
       units:[],
       doneLoadingEntry: false,
+      JSONSaved: false,
+      doneSavingJSON: false,
+      entryName: '',
+      entryType: '',
+      Manufacturer: '',
+      Location: '',
     };
   }
 
@@ -243,6 +249,13 @@ _reset = () => {
           values: [],
           units: [],
           doneLoadingEntry: false,
+          JSONSaved: false,
+          doneSavingJSON: false,
+          entryName: "",
+          entryType: "",
+          Manufacturer: '',
+          Location: '',
+          
       });
 
 
@@ -294,31 +307,44 @@ async _createCurrentJSON()
   
 }
 
+_saveJSON = () => {
+  var tmpJSONObj = [];
+
+  for(entryIndex = 0; entryIndex < this.state.names.length; entryIndex++)
+  {
+    if(this.state.names[entryIndex].unitIndex != -1)
+    {
+      tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: this.state.units[this.state.names[entryIndex].unitIndex]});
+    }
+    else
+    {
+      tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: {Word: null}});
+    }
+    
+  }
+  console.log(tmpJSONObj);
+
+  this.state.currentJSON = JSON.stringify(tmpJSONObj);
+
+  
+  this.setState({
+    JSONSaved: true,
+  }, function(){});
+
+}
+
 //Uploads asset data to the database
 _upload = () => {
 
-      var tmpJSONObj = [];
-
-      for(entryIndex = 0; entryIndex < this.state.names.length; entryIndex++)
-      {
-        if(this.state.names[entryIndex].unitIndex != -1)
-        {
-          tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: this.state.units[this.state.names[entryIndex].unitIndex]});
-        }
-        else
-        {
-          tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: {Word: null}});
-        }
-        
-      }
-      console.log(tmpJSONObj);
-
-      this.state.currentJSON = JSON.stringify(tmpJSONObj);
+      
 
       var data = new FormData();
       data.append('originalImageLoc', this.state.origUri);
       data.append('boxedImageLoc', this.state.uri);
-      data.append('name', 'test');
+      data.append('name', this.state.entryName);
+      data.append('type', this.state.entryType);
+      data.append('location', this.state.Location);
+      data.append('manufacturer', this.state.Manufacturer);
 
       console.log(this.state.currentJSON);
       data.append('json', this.state.currentJSON)
@@ -337,6 +363,11 @@ _upload = () => {
                   .catch((error) => {
                       console.error(error);
                   });
+}
+
+_uploadTest = () => {
+  console.log(this.state.entryName);
+  console.log(this.state.entryType);
 }
 
 //Passes creation time of selected asset to the server to retrieve its' parsed data
@@ -449,6 +480,7 @@ _databaseViewRender = () =>
                           <Text style={{marginHorizontal:7}}><Text style={{fontWeight: 'bold',}}>{item.Name}{"\n"}</Text>
                           Location: {item.Location}{"\n"}
                           Type: {item.Type}{"\n"}
+                          Manufacturer: {item.Manufacturer}{"\n"}
                           Creation Time: {item.creationTime}
                           </Text>
                       </Card>
@@ -748,8 +780,8 @@ _parsedStringsCombiningRender = () =>
         <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
       </View>
       <Button full backgroundColor='#33ccff' 
-      onPress={this._upload}>
-        <Text> Upload To Database </Text>
+      onPress={this._saveJSON}>
+        <Text> Next </Text>
       </Button>
       <View style={styles.buttonContainer}>
         <FlatList
@@ -810,6 +842,62 @@ _parsedStringsCombiningRender = () =>
         />
         </View>
         </Content>
+    </View>
+  );
+}
+
+_saveEntryRender = () =>
+{
+  return (
+
+    <View style={styles.container3} >
+    <Header style={{ backgroundColor: '#33ccff' }}>
+    <Left>
+      <Button transparent onPress={this._reset}>
+        <Icon name='home' />
+        <Text> Home </Text>
+      </Button>
+    </Left>
+    <Body>
+      
+    </Body>
+    </Header>
+    <Content>
+      <View style={styles.boxedImage} >
+        <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
+      </View>
+      <Button full backgroundColor='#33ccff' 
+      onPress={this._upload}>
+        <Text> Upload To Database </Text>
+      </Button>
+      
+      <Item>
+        <Text>Type: </Text>
+        <Picker mode="dropdown" iosIcon={<Icon name="arrow-down"/>} 
+          selectedValue={this.state.entryType}
+          onValueChange={(itemValue) => {this.setState({
+            entryType: itemValue,
+          });}}
+        >
+          <Picker.Item label="Motor" value={"Motor"}/>
+          <Picker.Item label="Pump" value={"Pump"}/>
+          <Picker.Item label="Fan" value={"Fan"}/>
+          <Picker.Item label="Generator" value={"Generator"}/>
+          <Picker.Item label="Chiller" value={"Chiller"}/>
+          <Picker.Item label="Compressor" value={"Compressor"}/>
+        </Picker>
+      </Item>
+      <Item success>
+        <Input  placeholder="Name" onChangeText={(text) => {this.state.entryName = text}}></Input>
+      </Item>
+      <Item>
+        <Input  placeholder="Manufacturer" onChangeText={(text) => {this.state.Manufacturer = text}}></Input>
+      </Item>
+      <Item>
+        <Input  placeholder="Location" onChangeText={(text) => {this.state.Location = text}}></Input>
+      </Item>
+        
+    </Content>
     </View>
   );
 }
@@ -876,7 +964,14 @@ _parsedStringsCombiningRender = () =>
           }
           else
           {
-            return this._parsedStringsCombiningRender();
+            if(!this.state.JSONSaved)
+            {
+              return this._parsedStringsCombiningRender();
+            }
+            else
+            {
+              return this._saveEntryRender();
+            }
           }
             
         }
@@ -950,6 +1045,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     justifyContent: 'center',
+    marginBottom:60,
   },
   cardContainer: {
     

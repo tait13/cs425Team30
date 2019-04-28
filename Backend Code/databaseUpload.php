@@ -12,11 +12,14 @@
     list($width, $height, $type, $attr) = getimagesize($_POST["originalImageLoc"]); 
 
     //Insert POST values into database
-    $sql = "INSERT INTO Assets (creationTime, originalImageLoc, boxedImageLoc, Model, imageWidth, imageHeight, AssetJSON) VALUES
+    $sql = "INSERT INTO Assets (creationTime, originalImageLoc, boxedImageLoc, Name, Type, Manufacturer, Location, imageWidth, imageHeight, AssetJSON) VALUES
         ('".date("Y-m-d H:i:s")."', '"
         .$_POST["originalImageLoc"]."', '"
         .$_POST["boxedImageLoc"]."', '"
         .$_POST["name"]."', '"
+        .$_POST["type"]."', '"
+        .$_POST["manufacturer"]."', '"
+        .$_POST["location"]."', '"
         .$width."', '"
         .$height."', '"
         .$_POST["json"]."');";

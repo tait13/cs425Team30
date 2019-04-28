@@ -42,6 +42,7 @@
             $output .= ' "boxedImageLoc": "' . $row["boxedImageLoc"] . '",';
             $output .= ' "Location": "' . $row["Location"] . '",';
             $output .= ' "Type": "' . $row["Type"] . '",';
+            $output .= ' "Manufacturer": "' . $row["Manufacturer"] . '",';
             $output .= ' "Name": "' . $row["Name"] . '"},';
             
             // echo '<br>';

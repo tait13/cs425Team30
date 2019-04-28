@@ -44,6 +44,7 @@
             $output .= ' "Name": "' . $row["Name"] . '",';
             $output .= ' "Location": "' . $row["Location"] . '",';
             $output .= ' "Type": "' . $row["Type"] . '",';
+            $output .= ' "Manufacturer": "' . $row["Manufacturer"] . '",';
             $output .= ' "assetJSON": ' . json_encode($row["AssetJSON"]) . ',';
             
             // echo '<br>';

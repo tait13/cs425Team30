@@ -40,7 +40,9 @@
             $output .= '{ "creationTime": "' . $row["creationTime"] . '",';
             $output .= ' "originalImageLoc": "' . $row["originalImageLoc"] . '",';
             $output .= ' "boxedImageLoc": "' . $row["boxedImageLoc"] . '",';
-            $output .= ' "name": "' . $row["name"] . '"},';
+            $output .= ' "Location": "' . $row["Location"] . '",';
+            $output .= ' "Type": "' . $row["Type"] . '",';
+            $output .= ' "Name": "' . $row["Name"] . '"},';
             
             // echo '<br>';
         }

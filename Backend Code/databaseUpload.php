@@ -9,12 +9,16 @@
         die("Connection failed:" . mysqli_connect_error());
     }
 
+    list($width, $height, $type, $attr) = getimagesize($_POST["originalImageLoc"]); 
+
     //Insert POST values into database
-    $sql = "INSERT INTO Assets (creationTime, originalImageLoc, boxedImageLoc, name, AssetJSON) VALUES
+    $sql = "INSERT INTO Assets (creationTime, originalImageLoc, boxedImageLoc, Model, imageWidth, imageHeight, AssetJSON) VALUES
         ('".date("Y-m-d H:i:s")."', '"
         .$_POST["originalImageLoc"]."', '"
         .$_POST["boxedImageLoc"]."', '"
         .$_POST["name"]."', '"
+        .$width."', '"
+        .$height."', '"
         .$_POST["json"]."');";
         
     //Check if successful    
@@ -24,7 +28,7 @@
     }
     else
     {
-        print "Error: " . $sql . "<br>" . $conn->error;
+        print "Error: " . $sql . "<br>" . $connection->error;
     }
 
 ?>

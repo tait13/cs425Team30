@@ -41,7 +41,9 @@
             $output .= '"creationTime": "' . $row["creationTime"] . '",';
             $output .= ' "originalImageLoc": "' . $row["originalImageLoc"] . '",';
             $output .= ' "boxedImageLoc": "' . $row["boxedImageLoc"] . '",';
-            $output .= ' "name": "' . $row["name"] . '",';
+            $output .= ' "Name": "' . $row["Name"] . '",';
+            $output .= ' "Location": "' . $row["Location"] . '",';
+            $output .= ' "Type": "' . $row["Type"] . '",';
             $output .= ' "assetJSON": ' . json_encode($row["AssetJSON"]) . ',';
             
             // echo '<br>';

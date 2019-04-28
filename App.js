@@ -19,7 +19,7 @@ import {
   } from 'react-native';
 import { createStackNavigator, createAppContainer } from "react-navigation";
 import ImagePicker from 'react-native-image-picker';
-import { Container, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input, Picker, Form, Segment, Thumbnail, Card, CardItem } from 'native-base';
+import { Container, Root, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input, Picker, Form, Segment, Thumbnail, Card, CardItem, Toast } from 'native-base';
 import fileType from 'react-native-file-type';
 
 
@@ -295,17 +295,7 @@ _database = () => {
       });
 }
 
-async _createCurrentJSON()
-{
-  console.log(this.state.names);
-  console.log(this.state.values);
-  console.log(this.state.units);
 
-  console.log(JSON.stringify(this.state.names));
-
-  
-  
-}
 
 _saveJSON = () => {
   var tmpJSONObj = [];
@@ -337,7 +327,12 @@ _saveJSON = () => {
 _upload = () => {
 
       
-
+    if(this.state.entryName === "" || this.state.entryType === "" || this.state.Location === "" || this.state.Manufacturer === "")
+    {
+      Alert.alert('Please Fill Out All Fields');
+    }
+    else
+    {
       var data = new FormData();
       data.append('originalImageLoc', this.state.origUri);
       data.append('boxedImageLoc', this.state.uri);
@@ -363,11 +358,18 @@ _upload = () => {
                   .catch((error) => {
                       console.error(error);
                   });
+    }
 }
 
-_uploadTest = () => {
-  console.log(this.state.entryName);
-  console.log(this.state.entryType);
+_test = () => {
+  // Alert.alert('Please Fill Out All Fields');
+  Alert.alert('Are you sure you would like to delete this entry?',
+  'This action is irreversable.',
+    [{text: 'Cancel', onPress: () => console.log('Cancelled'), style:'cancel',},
+      {text: 'Delete', onPress: () => console.log('Ok'),},
+    ],
+    {cancelable: false},
+  );
 }
 
 //Passes creation time of selected asset to the server to retrieve its' parsed data
@@ -438,6 +440,9 @@ _homeScreenRender = () =>
           </Button>
           <Button iconLeft block backgroundColor="#66ccff" style = {{marginBottom: 2}} onPress={this._database}>
             <Text>  Previous Uploads</Text>
+          </Button>
+          <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={this._test}>
+            <Text>  Test</Text>
           </Button>
         
       </View>
@@ -879,6 +884,7 @@ _saveEntryRender = () =>
             entryType: itemValue,
           });}}
         >
+          <Picker.Item label="Select a Type" value={""}/>
           <Picker.Item label="Motor" value={"Motor"}/>
           <Picker.Item label="Pump" value={"Pump"}/>
           <Picker.Item label="Fan" value={"Fan"}/>
@@ -983,7 +989,7 @@ const AppNavigator = createStackNavigator({
   Home: {screen: HomeScreen},
 });
 
-export default createAppContainer(AppNavigator);
+export default (createAppContainer(AppNavigator));
 
 
 

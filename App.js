@@ -333,7 +333,7 @@ _upload = () => {
                       },
                       body: data
                   })
-                  .then((response) => { console.log(response); return response;})
+                  .then((response) => { return response.text();}).then((text) => {console.log(text); return text})
                   .catch((error) => {
                       console.error(error);
                   });
@@ -446,9 +446,10 @@ _databaseViewRender = () =>
                         
                         
                         <Thumbnail square large source = {{uri: item.originalImageLoc}}  />
-                          <Text style={{marginHorizontal:7}}>Creation Time: {item.creationTime}{"\n"}
-                          Name: {item.Model}{"\n"}
-                          Location: Test
+                          <Text style={{marginHorizontal:7}}><Text style={{fontWeight: 'bold',}}>{item.Name}{"\n"}</Text>
+                          Location: {item.Location}{"\n"}
+                          Type: {item.Type}{"\n"}
+                          Creation Time: {item.creationTime}
                           </Text>
                       </Card>
                     </TouchableOpacity>

@@ -53,6 +53,9 @@ class HomeScreen extends React.Component {
       Manufacturer: '',
       Location: '',
       addNewModalVisible: false,
+      newName: '',
+      newValue: '',
+      newUnit: '',
     };
   }
 
@@ -486,29 +489,45 @@ _setModalVisible = (newState) =>
 
 _addNewEntry = () =>
 {
-  console.log(this.state.newName);
-  console.log(this.state.newValue);
-  console.log(this.state.newUnit);
+  if(this.state.newName ==="" && this.state.newValue ==="")
+  {
+    Alert.alert('No text for Name or Value Entered');
+  }
+  else if(this.state.newName ==="")
+  {
+    Alert.alert('No text for Name Entered');
+  }
+  else if(this.state.newValue ==="")
+  {
+    Alert.alert('No text for Value Entered');
+  }
+  else
+  {
+    console.log(this.state.newName);
+    console.log(this.state.newValue);
+    console.log(this.state.newUnit);
 
-  this._setModalVisible(false);
+    this._setModalVisible(false);
 
-  var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:this.state.values.length, unitIndex:this.state.units.length};
-      // console.log(wordObj);
-  this.state.names.push(wordObj);
+    var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:this.state.values.length, unitIndex:this.state.units.length};
+        // console.log(wordObj);
+    this.state.names.push(wordObj);
 
-  wordObj = {Word:this.state.newValue, Bounds:null};
-  this.state.values.push(wordObj);
-  wordObj = {Word:this.state.newUnit, Bounds:null};
-  this.state.units.push(wordObj);
+    wordObj = {Word:this.state.newValue, Bounds:null};
+    this.state.values.push(wordObj);
+    wordObj = {Word:this.state.newUnit, Bounds:null};
+    this.state.units.push(wordObj);
 
 
-  console.log(this.state.names[this.state.names.length-1]);
-  this.setState({
-    newName: "",
-    newValue: "",
-    newUnit: "",
-    refresh: !this.state.refresh,
-  }, function(){});
+    console.log(this.state.names[this.state.names.length-1]);
+    this.setState({
+      newName: "",
+      newValue: "",
+      newUnit: "",
+      refresh: !this.state.refresh,
+    }, function(){});
+  }
+    
 }
 _homeScreenRender = () =>
 {
@@ -884,14 +903,17 @@ _parsedStringsCombiningRender = () =>
       <View style={styles.boxedImage} >
         <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
       </View>
-      <Button full backgroundColor='#33ccff' 
-      onPress={this._saveJSON}>
-        <Text> Next </Text>
-      </Button>
-      <Button full backgroundColor='#33ccff' 
-      onPress={() => this._setModalVisible(true)}>
-        <Text> Add New Entry </Text>
-      </Button>
+      <View style={{flexDirection:'row',justifyContent:'space-evenly'}}>
+        <Button full backgroundColor='#33ccff' 
+        onPress={() => this._setModalVisible(true)} style={{width:(Dimensions.get('window').width/2), marginRight:2}}>
+          <Text> Add New Entry </Text>
+        </Button>
+        <Button full  backgroundColor='#33ccff' 
+        onPress={this._saveJSON} style={{width:(Dimensions.get('window').width/2), marginLeft:2}}>
+          <Text> Next </Text>
+        </Button>
+        
+      </View>
       <View style={styles.buttonContainer}>
         <FlatList
           data={this.state.names}
@@ -960,7 +982,7 @@ _parsedStringsCombiningRender = () =>
             position: 'absolute',
             bottom: 0,
       }}>
-            <Button block backgroundColor="#33ccff" onPress={this._addNewEntry}><Text>Add Entry</Text></Button>
+            <Button block backgroundColor="#33ccff" onPress={this._addNewEntry}><Text>Save</Text></Button>
             <Item >
               <Input  placeholder="Name" onChangeText={(text) => {this.state.newName = text}}></Input>
             </Item>

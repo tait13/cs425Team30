@@ -16,6 +16,7 @@ import {
   TouchableHighlight,
   TouchableOpacity,
   TextInput,
+  Modal,
   } from 'react-native';
 import { createStackNavigator, createAppContainer } from "react-navigation";
 import ImagePicker from 'react-native-image-picker';
@@ -51,6 +52,7 @@ class HomeScreen extends React.Component {
       entryType: '',
       Manufacturer: '',
       Location: '',
+      addNewModalVisible: false,
     };
   }
 
@@ -255,6 +257,7 @@ _reset = () => {
           entryType: "",
           Manufacturer: '',
           Location: '',
+          retrievedData: [],
           
       });
 
@@ -380,15 +383,52 @@ _upload = () => {
     }
 }
 
-_test = () => {
-  // Alert.alert('Please Fill Out All Fields');
+_deleteFromDatabase = (item) => {
+
   Alert.alert('Are you sure you would like to delete this entry?',
   'This action is irreversable.',
     [{text: 'Cancel', onPress: () => console.log('Cancelled'), style:'cancel',},
-      {text: 'Delete', onPress: () => console.log('Ok'),},
+      {text: 'Delete', onPress: () => {
+          var data = new FormData();
+          data.append('creationTime', this.state.creationTime);
+
+          return fetch('https://cs425.alextait.net/deleteEntry.php', {
+              method: 'POST',
+              headers: {
+                  Accept: 'text/plain',
+                  'Content-Type': 'multipart/form-data',
+              },
+              body: data
+          })
+          .then((response) => { return response.text();}).then((text) => 
+          {
+            this.state.retrievedData = [];
+            this._database();
+
+            console.log(text);
+            this.setState({
+              doneLoadingEntry: false,
+              loadedSingleObject: false,
+            }, function(){});
+
+            
+            
+
+            return text;
+          })
+          .catch((error) => {
+              console.error(error);
+          });
+          
+          
+
+      },},
     ],
     {cancelable: false},
+
   );
+
+  
 }
 
 //Passes creation time of selected asset to the server to retrieve its' parsed data
@@ -435,6 +475,41 @@ _chooseFromDatabase = (item) => {
               });
 }
 
+_setModalVisible = (newState) =>
+{
+  this.setState({
+    addNewModalVisible: newState,
+    
+}, function(){});
+  console.log(this.state.addNewModalVisible);
+} 
+
+_addNewEntry = () =>
+{
+  console.log(this.state.newName);
+  console.log(this.state.newValue);
+  console.log(this.state.newUnit);
+
+  this._setModalVisible(false);
+
+  var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:this.state.values.length, unitIndex:this.state.units.length};
+      // console.log(wordObj);
+  this.state.names.push(wordObj);
+
+  wordObj = {Word:this.state.newValue, Bounds:null};
+  this.state.values.push(wordObj);
+  wordObj = {Word:this.state.newUnit, Bounds:null};
+  this.state.units.push(wordObj);
+
+
+  console.log(this.state.names[this.state.names.length-1]);
+  this.setState({
+    newName: "",
+    newValue: "",
+    newUnit: "",
+    refresh: !this.state.refresh,
+  }, function(){});
+}
 _homeScreenRender = () =>
 {
   //Home Screen render
@@ -446,7 +521,8 @@ _homeScreenRender = () =>
       </Text> */}
       
       <View style={styles.container1}>
-      <Image source={{uri: 'https://cs425.alextait.net/unrlogo.png'}} style = {{alignSelf: "center", width:200, height:200, marginBottom: 20, }}/>
+      <Text style={{alignSelf:"center", fontSize:25, textAlign: 'center'}}>Asset Configuration Through Images</Text>
+      <Image source={{uri: 'https://cs425.alextait.net/unrlogo.png'}} style = {{alignSelf: "center", width:200, height:200, marginBottom: 20, marginTop: 20}}/>
       
           <Button iconLeft block backgroundColor="#66ccff" style = {{marginBottom: 2}} onPress={this._cameraButton}>
             <Icon name="camera" />
@@ -460,9 +536,11 @@ _homeScreenRender = () =>
           <Button iconLeft block backgroundColor="#66ccff" style = {{marginBottom: 2}} onPress={this._database}>
             <Text>  Previous Uploads</Text>
           </Button>
-          <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={this._test}>
+          {/* <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() => this._setModalVisible(true)}>
             <Text>  Test</Text>
-          </Button>
+          </Button> */}
+
+          
         
       </View>
     </View>
@@ -532,6 +610,9 @@ _singleDatabaseEntryRender = () =>
       </Header>
       <Content style={styles.singleDatabaseEntry}>
         <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+        <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() =>{this._deleteFromDatabase(this.state.creationTime)} }>
+          <Text>Delete From Database</Text>
+        </Button>
         <FlatList
                   data={this.state.parsedStrings}
 
@@ -807,6 +888,10 @@ _parsedStringsCombiningRender = () =>
       onPress={this._saveJSON}>
         <Text> Next </Text>
       </Button>
+      <Button full backgroundColor='#33ccff' 
+      onPress={() => this._setModalVisible(true)}>
+        <Text> Add New Entry </Text>
+      </Button>
       <View style={styles.buttonContainer}>
         <FlatList
           data={this.state.names}
@@ -866,6 +951,27 @@ _parsedStringsCombiningRender = () =>
         />
         </View>
         </Content>
+
+        <Modal animationType="slide" visible={this.state.addNewModalVisible}
+            transparent={true} presentationStyle="formSheet" onRequestClose={() => {this._setModalVisible(false);}}
+          >
+          <View style={{backgroundColor:'#ffffff',
+            width:'100%',
+            position: 'absolute',
+            bottom: 0,
+      }}>
+            <Button block backgroundColor="#33ccff" onPress={this._addNewEntry}><Text>Add Entry</Text></Button>
+            <Item >
+              <Input  placeholder="Name" onChangeText={(text) => {this.state.newName = text}}></Input>
+            </Item>
+            <Item>
+              <Input  placeholder="Value" onChangeText={(text) => {this.state.newValue = text}} ></Input>
+            </Item>
+            <Item>
+              <Input  placeholder="Unit" onChangeText={(text) => {this.state.newUnit = text}}></Input>
+            </Item>
+          </View>
+      </Modal>
     </View>
   );
 }
@@ -912,7 +1018,7 @@ _saveEntryRender = () =>
           <Picker.Item label="Compressor" value={"Compressor"}/>
         </Picker>
       </Item>
-      <Item success>
+      <Item >
         <Input  placeholder="Name" onChangeText={(text) => {this.state.entryName = text}}></Input>
       </Item>
       <Item>
@@ -1020,7 +1126,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 20,
     marginRight: 20,
-    marginTop: 150,
+    marginTop: 50,
   },
   container2: {
     flex: 1,

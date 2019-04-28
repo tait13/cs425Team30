@@ -298,28 +298,47 @@ _database = () => {
 
 
 _saveJSON = () => {
-  var tmpJSONObj = [];
+
+  var allEntriesHaveValue = true;
 
   for(entryIndex = 0; entryIndex < this.state.names.length; entryIndex++)
   {
-    if(this.state.names[entryIndex].unitIndex != -1)
+    if(this.state.names[entryIndex].valueIndex == -1)
     {
-      tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: this.state.units[this.state.names[entryIndex].unitIndex]});
+      allEntriesHaveValue = false;
     }
-    else
-    {
-      tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: {Word: null}});
-    }
-    
   }
-  console.log(tmpJSONObj);
 
-  this.state.currentJSON = JSON.stringify(tmpJSONObj);
+  if(allEntriesHaveValue)
+  {
+    var tmpJSONObj = [];
 
+    for(entryIndex = 0; entryIndex < this.state.names.length; entryIndex++)
+    {
+      if(this.state.names[entryIndex].unitIndex != -1)
+      {
+        tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: this.state.units[this.state.names[entryIndex].unitIndex]});
+      }
+      else
+      {
+        tmpJSONObj.push({EntryName: this.state.names[entryIndex], Value: this.state.values[this.state.names[entryIndex].valueIndex], Unit: {Word: null}});
+      }
+      
+    }
+    console.log(tmpJSONObj);
+
+    this.state.currentJSON = JSON.stringify(tmpJSONObj);
+
+    
+    this.setState({
+      JSONSaved: true,
+    }, function(){});
+  }
+  else
+  {
+    Alert.alert('An entry is missing a value!', 'Please ensure all entries have a corresponding value.');
+  }
   
-  this.setState({
-    JSONSaved: true,
-  }, function(){});
 
 }
 

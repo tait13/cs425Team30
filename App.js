@@ -208,26 +208,34 @@ _sendImageToOCR = () =>{
             console.log(this.state.notParsed);
             console.log(receivedData);
 
-            this.setState({
-                notParsed: false,
-                parsedStrings: receivedData.Strings,
-                origUri: receivedData.originalImage,
-                uri: receivedData.imageURL,
-                wordObjArray: [],
-                currentJSON: JSON.stringify(receivedData),
-            }, function(){});
-
-            console.log(this.state.wordObjArray);
-            console.log(this.state.parsedStrings.length);
-
-            //Push words to new array
-            for(wordIndex = 0; wordIndex < this.state.parsedStrings.length; wordIndex++)
+            if(receivedData.Status === "Success")
             {
-              var wordObj = {Word:this.state.parsedStrings[wordIndex].Word, Bounds:this.state.parsedStrings[wordIndex].Bounds};
-              this.state.wordObjArray.push(wordObj);
-              this.state.parsedStrings[wordIndex].type = -1;
+              this.setState({
+                  notParsed: false,
+                  parsedStrings: receivedData.Strings,
+                  origUri: receivedData.originalImage,
+                  uri: receivedData.imageURL,
+                  wordObjArray: [],
+                  currentJSON: JSON.stringify(receivedData),
+              }, function(){});
 
+              console.log(this.state.wordObjArray);
+              console.log(this.state.parsedStrings.length);
+
+              //Push words to new array
+              for(wordIndex = 0; wordIndex < this.state.parsedStrings.length; wordIndex++)
+              {
+                var wordObj = {Word:this.state.parsedStrings[wordIndex].Word, Bounds:this.state.parsedStrings[wordIndex].Bounds};
+                this.state.wordObjArray.push(wordObj);
+                this.state.parsedStrings[wordIndex].type = -1;
+
+              }
             }
+            else
+            {
+              Alert.alert("Error", receivedData.Message, [{text: 'OK', onPress:() => {this._reset()}}]);
+            }
+            
         })
         .catch((error) => {
             console.error(error);

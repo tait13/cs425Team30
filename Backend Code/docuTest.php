@@ -78,13 +78,16 @@
             // print_r($response);
             //print_r($target_file);
             //print_r('annotation is null');
-        }
 
-        // printf('%d texts found:' . PHP_EOL, count($texts));
+            echo('{"Status":"Error","Message":"Optical Character Recognition Unable to Detect Any Text."}');
+        }
+        else
+        {
+            // printf('%d texts found:' . PHP_EOL, count($texts));
         
         $yellow = imagecolorallocate($im, 255, 255, 0);
         imagesetthickness ( $im, 5 );
-        $output = '{ "Strings": [';
+        $output = '{ "Status": "Success", "Strings": [';
         
         foreach($annotation->getPages() as $page)
         {
@@ -164,12 +167,14 @@
         fwrite($log, $text);
         
         echo($output);
+        }
+        
 
     } catch (Exception $e) {
-        
         //Echo exception NEEDS TO BE CONVERTED TO JSON OUTPUT SO MOBILE APP CAN HANDLE
         echo 'Caught exception: ',  $e->getMessage(), "\n";
         fwrite($log, 'Caught exception: ');
+        
     }
     
 ?>

@@ -469,6 +469,10 @@ _chooseFromDatabase = (item) => {
                     creationTime: receivedData.creationTime,
                     originalImageLoc: receivedData.originalImageLoc,
                     boxedImageLoc: receivedData.boxedImageLoc,
+                    currentName: receivedData.Name,
+                    currentLocation: receivedData.Location,
+                    currentType: receivedData.Type,
+                    currentManufacturer: receivedData.Manufacturerm,
                     doneLoadingEntry: true,
                     
                 }, function(){});
@@ -634,6 +638,13 @@ _singleDatabaseEntryRender = () =>
         <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() =>{this._deleteFromDatabase(this.state.creationTime)} }>
           <Text>Delete From Database</Text>
         </Button>
+        
+        <Text style={{marginHorizontal:15}}><Text style={{fontWeight: 'bold', fontSize:16}}>{this.state.currentName}{"\n"}</Text>
+        <Text style={{fontWeight: 'bold',}}>Location: </Text>{this.state.currentLocation}{"\n"}
+        <Text style={{fontWeight: 'bold',}}>Type: </Text>{this.state.currentType}{"\n"}
+        <Text style={{fontWeight: 'bold',}}>Manufacturer:</Text> {this.state.currentManufacturer}{"\n"}
+        <Text style={{fontWeight: 'bold',}}>Creation Time: </Text>{this.state.creationTime}
+          </Text>
         <FlatList
                   data={this.state.parsedStrings}
 

@@ -120,13 +120,15 @@ class HomeScreen extends React.Component {
           console.log('User tapped custom button: ', response.customButton);
         } else {
           const source = { uri: response.uri, type: response.type};
-
+          
           // You can also display the image using data:
           // const source = { uri: 'data:image/jpeg;base64,' + response.data };
           
           this.setState({
             parseSource: source,
             imageSelected: true,
+            imageHeight: response.height,
+            imageWidth: response.width,
           });
           console.log(source);
           // console.log(this.state.parseSource.type);
@@ -487,6 +489,8 @@ _chooseFromDatabase = (item) => {
                     currentLocation: receivedData.Location,
                     currentType: receivedData.Type,
                     currentManufacturer: receivedData.Manufacturer,
+                    imageHeight: receivedData.imageHeight,
+                    imageWidth: receivedData.imageWidth,
                     doneLoadingEntry: true,
                     
                 }, function(){});
@@ -681,7 +685,12 @@ _singleDatabaseEntryRender = () =>
         </Body>
       </Header>
       <Content style={styles.singleDatabaseEntry}>
-        <Image backgroundColor="#5e5e5e" source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+        <Image backgroundColor="#5e5e5e" source={{uri: this.state.boxedImageLoc}} style = {{
+            width: Dimensions.get('window').width ,
+            height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+            marginTop: 0,
+        }}
+        resizeMode = "contain"/>
         <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() =>{this._deleteFromDatabase(this.state.creationTime)} }>
           <Text>Delete From Database</Text>
         </Button>
@@ -736,7 +745,11 @@ _readyToParseRender = () =>
         </Body>
       </Header>
       <Content>
-      <Image source = {this.state.parseSource} style = {styles.imageStyleFullScreen} resizeMode={"contain"}/>
+      <Image source = {this.state.parseSource} style = {{
+        width: Dimensions.get('window').width ,
+        height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+        marginTop: 0,
+    }} resizeMode={"contain"}/>
       
       </Content>
       <Footer>
@@ -766,7 +779,12 @@ _waitingOnParseRender = () =>
         
       </Body>
     </Header>
-     <Image source = {this.state.parseSource} style = {styles.imageStyle} resizeMode={"contain"}/>
+     <Image source = {this.state.parseSource} style = {{
+          width: Dimensions.get('window').width ,
+          height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+          marginTop: 0,
+      }} 
+    resizeMode={"contain"}/>
 
       <View style={styles.container2}>
           <View style={styles.buttonContainer}>
@@ -850,7 +868,11 @@ _imageParsedRender = () =>
     </Header>
     <Content>
       <View style={styles.boxedImage} >
-        <Image backgroundColor="#5e5e5e" source={{uri: this.state.uri}} style = {styles.imageStyle} />
+        <Image backgroundColor="#5e5e5e" source={{uri: this.state.uri}} style = {{
+          width: Dimensions.get('window').width ,
+          height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+          marginTop: 0,
+        }} />
       </View>
       <Button full backgroundColor='#33ccff' 
       onPress={this._seperateWords}>
@@ -934,7 +956,11 @@ _parsedStringsCombiningRender = () =>
     </Header>
     <Content>
       <View style={styles.boxedImage} >
-        <Image backgroundColor="#5e5e5e" source={{uri: this.state.uri}} style = {styles.imageStyle} />
+        <Image backgroundColor="#5e5e5e" source={{uri: this.state.uri}} style = {{
+            width: Dimensions.get('window').width ,
+            height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+            marginTop: 0,
+        }} />
       </View>
       <View style={{flexDirection:'row',justifyContent:'space-evenly'}}>
         <Button full backgroundColor='#33ccff' 
@@ -1050,7 +1076,11 @@ _saveEntryRender = () =>
     </Header>
     <Content>
       <View style={styles.boxedImage} >
-        <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
+        <Image source={{uri: this.state.uri}} style = {{
+          width: Dimensions.get('window').width ,
+          height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+          marginTop: 0,
+        }} />
       </View>
       <Button full backgroundColor='#33ccff' 
       onPress={this._upload}>
@@ -1104,7 +1134,11 @@ _uploadedRender = () =>
         </Body>
       </Header>
       <Content style={styles.singleDatabaseEntry}>
-        <Image backgroundColor="#5e5e5e" source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+        <Image backgroundColor="#5e5e5e" source={{uri: this.state.boxedImageLoc}} style = {{
+        width: Dimensions.get('window').width ,
+        height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+        marginTop: 0,
+    }} resizeMode = "contain"/>
         <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() =>{this._deleteFromDatabase(this.state.creationTime)} }>
           <Text>Delete From Database</Text>
         </Button>

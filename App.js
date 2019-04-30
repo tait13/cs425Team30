@@ -24,6 +24,8 @@ import { Container, Root, Header, Title, Content, Footer, FooterTab, Button, Lef
 import fileType from 'react-native-file-type';
 
 
+
+
 class HomeScreen extends React.Component {
 
   static navigationOptions = {
@@ -41,6 +43,7 @@ class HomeScreen extends React.Component {
       postCalled: false,
       databaseLoaded: false,
       refresh: false,
+      refresh2: false,
       valuesSaved: false,
       names:[],
       values:[],
@@ -56,6 +59,7 @@ class HomeScreen extends React.Component {
       newName: '',
       newValue: '',
       newUnit: '',
+      uploaded: false,
     };
   }
 
@@ -318,6 +322,8 @@ _saveJSON = () => {
     }
   }
 
+  console.log(this.state.names);
+
   if(allEntriesHaveValue)
   {
     var tmpJSONObj = [];
@@ -382,7 +388,15 @@ _upload = () => {
                       },
                       body: data
                   })
-                  .then((response) => { return response.text();}).then((text) => {console.log(text); return text})
+                  .then((response) => { return response.json();}).then(
+                    (receivedData) => {
+                      console.log(receivedData);
+                      
+                      console.log(receivedData.Time);
+                      this._chooseFromDatabase({creationTime: receivedData.Time});
+                      this.setState({creationTime: receivedData.Time});
+                      return receivedData;
+                    })
                   .catch((error) => {
                       console.error(error);
                   });
@@ -469,9 +483,21 @@ _chooseFromDatabase = (item) => {
                     creationTime: receivedData.creationTime,
                     originalImageLoc: receivedData.originalImageLoc,
                     boxedImageLoc: receivedData.boxedImageLoc,
+                    currentName: receivedData.Name,
+                    currentLocation: receivedData.Location,
+                    currentType: receivedData.Type,
+                    currentManufacturer: receivedData.Manufacturer,
                     doneLoadingEntry: true,
                     
                 }, function(){});
+
+                if(this.state.JSONSaved)
+                {
+                  this.setState({
+                    uploaded: true,
+                  }, function(){});
+                  Alert.alert("Upload Successful");
+                }
                 console.log(this.state.parsedStrings);
               })
               .catch((error) => {
@@ -510,13 +536,25 @@ _addNewEntry = () =>
 
     this._setModalVisible(false);
 
-    var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:this.state.values.length, unitIndex:this.state.units.length};
-    this.state.names.push(wordObj);
+    if(this.state.newUnit === "")
+    {
+      var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:this.state.values.length, unitIndex:-1};
+      this.state.names.push(wordObj);
 
-    wordObj = {Word:this.state.newValue, Bounds:null};
-    this.state.values.push(wordObj);
-    wordObj = {Word:this.state.newUnit, Bounds:null};
-    this.state.units.push(wordObj);
+      wordObj = {Word:this.state.newValue, Bounds:null};
+      this.state.values.push(wordObj);
+    }
+    else
+    {
+      var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:this.state.values.length, unitIndex:this.state.units.length};
+      this.state.names.push(wordObj);
+
+      wordObj = {Word:this.state.newValue, Bounds:null};
+      this.state.values.push(wordObj);
+      wordObj = {Word:this.state.newUnit, Bounds:null};
+      this.state.units.push(wordObj);
+    }
+    
 
     this.setState({
       newName: "",
@@ -524,6 +562,10 @@ _addNewEntry = () =>
       newUnit: "",
       refresh: !this.state.refresh,
     }, function(){});
+
+    console.log(this.state.names);
+    console.log(this.state.values);
+    console.log(this.state.units);
   }
     
 }
@@ -634,6 +676,13 @@ _singleDatabaseEntryRender = () =>
         <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() =>{this._deleteFromDatabase(this.state.creationTime)} }>
           <Text>Delete From Database</Text>
         </Button>
+        
+        <Text style={{marginHorizontal:15}}><Text style={{fontWeight: 'bold', fontSize:16}}>{this.state.currentName}{"\n"}</Text>
+        <Text style={{fontWeight: 'bold',}}>Location: </Text>{this.state.currentLocation}{"\n"}
+        <Text style={{fontWeight: 'bold',}}>Type: </Text>{this.state.currentType}{"\n"}
+        <Text style={{fontWeight: 'bold',}}>Manufacturer:</Text> {this.state.currentManufacturer}{"\n"}
+        <Text style={{fontWeight: 'bold',}}>Creation Time: </Text>{this.state.creationTime}
+          </Text>
         <FlatList
                   data={this.state.parsedStrings}
 
@@ -880,11 +929,11 @@ _parsedStringsCombiningRender = () =>
       </View>
       <View style={{flexDirection:'row',justifyContent:'space-evenly'}}>
         <Button full backgroundColor='#33ccff' 
-        onPress={() => this._setModalVisible(true)} style={{width:(Dimensions.get('window').width/2), marginRight:2}}>
+        onPress={() => this._setModalVisible(true)} style={{width:(Dimensions.get('window').width/2), margin:4, marginTop:0}}>
           <Text> Add New Entry </Text>
         </Button>
         <Button full  backgroundColor='#33ccff' 
-        onPress={this._saveJSON} style={{width:(Dimensions.get('window').width/2), marginLeft:2}}>
+        onPress={this._saveJSON} style={{width:(Dimensions.get('window').width/2), margin:4, marginTop:0}}>
           <Text> Next </Text>
         </Button>
         
@@ -893,7 +942,7 @@ _parsedStringsCombiningRender = () =>
         <FlatList
           data={this.state.names}
           extraData={this.state}
-          
+          key={this.state.refresh}
           renderItem={({item, index}) =>
                
           <Item style={{flex:1, flexDirection: 'row'}} regular>
@@ -917,6 +966,7 @@ _parsedStringsCombiningRender = () =>
                       this.setState({
                         refresh: !this.state.refresh,
                       });
+                      
                     }}>
               <Picker.Item label="Select a value" value={-1} />  
                 {
@@ -1030,7 +1080,58 @@ _saveEntryRender = () =>
   );
 }
 
+_uploadedRender = () =>
+{
+  return (
+    <Container>
+      <Header style={{ backgroundColor: '#33ccff' }}>
+        <Left>
+          <Button transparent onPress={this._reset}>
+            <Icon name='home' />
+            <Text> Home </Text>
+          </Button>
+        </Left>
+        <Body>
+        </Body>
+      </Header>
+      <Content style={styles.singleDatabaseEntry}>
+        <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+        <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() =>{this._deleteFromDatabase(this.state.creationTime)} }>
+          <Text>Delete From Database</Text>
+        </Button>
+        
+        <Text style={{marginHorizontal:15}}><Text style={{fontWeight: 'bold', fontSize:16}}>{this.state.currentName}{"\n"}</Text>
+        <Text style={{fontWeight: 'bold',}}>Location: </Text>{this.state.currentLocation}{"\n"}
+        <Text style={{fontWeight: 'bold',}}>Type: </Text>{this.state.currentType}{"\n"}
+        <Text style={{fontWeight: 'bold',}}>Manufacturer:</Text> {this.state.currentManufacturer}{"\n"}
+        <Text style={{fontWeight: 'bold',}}>Creation Time: </Text>{this.state.creationTime}
+          </Text>
+        <FlatList
+                  data={this.state.parsedStrings}
 
+                  renderItem={({item}) => <Text style={{fontWeight: 'bold', marginHorizontal:15,}}>{item.EntryName.Word}:<Text style={{fontWeight: '400'}}> {item.Value.Word} {item.Unit.Word}</Text></Text>}
+
+
+              />
+        {/* <View style={{flexDirection:"column", alignItems:"flex-start"}}>
+          <View >
+              <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+          </View>
+
+          <View style={styles.buttonContainer}>
+              <FlatList
+                  data={this.state.parsedStrings}
+
+                  renderItem={({item}) => <Text>{item.EntryName.Word}: {item.Value.Word} {item.Unit.Word}</Text>}
+
+
+              />
+          </View>
+        </View> */}
+      </Content>
+    </Container>
+  );
+}
 
 //Render call
   render() {
@@ -1098,7 +1199,15 @@ _saveEntryRender = () =>
             }
             else
             {
-              return this._saveEntryRender();
+              if(!this.state.uploaded)
+              {
+                return this._saveEntryRender();
+              }
+              else
+              {
+                return this._uploadedRender();
+              }
+              
             }
           }
             
@@ -1159,7 +1268,7 @@ const styles = StyleSheet.create({
   imageStyle: {
     width: Dimensions.get('window').width ,
     height: Dimensions.get('window').width * 9 / 16,
-    marginTop: 5,
+    marginTop: 0,
   },
   touchableContainer: {
     

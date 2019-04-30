@@ -282,7 +282,7 @@ _database = () => {
       var data = new FormData();
       data.append('Total', 25);
 
-      return fetch('https://cs425.alextait.net/retrieveAssets.php', {
+      return fetch('https://cs425.alextait.net/retrieveAssetsWithJSON.php', {
           method: 'POST',
           headers: {
               Accept: 'application/json',
@@ -519,30 +519,39 @@ _setModalVisible = (newState) =>
 //Adds a new name value and unit based on text entered into modal
 _addNewEntry = () =>
 {
-  if(this.state.newName ==="" && this.state.newValue ==="")
-  {
-    Alert.alert('No text for Name or Value Entered');
-  }
-  else if(this.state.newName ==="")
+  if(this.state.newName ==="")
   {
     Alert.alert('No text for Name Entered');
-  }
-  else if(this.state.newValue ==="")
-  {
-    Alert.alert('No text for Value Entered');
   }
   else
   {
 
     this._setModalVisible(false);
 
-    if(this.state.newUnit === "")
+    if(this.state.newUnit === "" && this.state.newValue === "")
+    {
+      var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:-1, unitIndex:-1};
+      this.state.names.push(wordObj);
+
+      wordObj = {Word:this.state.newValue, Bounds:null};
+      this.state.values.push(wordObj);
+    }
+    else if(this.state.newUnit === "")
     {
       var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:this.state.values.length, unitIndex:-1};
       this.state.names.push(wordObj);
 
       wordObj = {Word:this.state.newValue, Bounds:null};
       this.state.values.push(wordObj);
+    }
+    else if(this.state.newValue === "")
+    {
+      var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:-1, unitIndex:this.state.units.length};
+      this.state.names.push(wordObj);
+      wordObj = {Word:this.state.newValue, Bounds:null};
+      this.state.values.push(wordObj);
+      wordObj = {Word:this.state.newUnit, Bounds:null};
+      this.state.units.push(wordObj);
     }
     else
     {
@@ -672,7 +681,7 @@ _singleDatabaseEntryRender = () =>
         </Body>
       </Header>
       <Content style={styles.singleDatabaseEntry}>
-        <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+        <Image backgroundColor="#5e5e5e" source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
         <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() =>{this._deleteFromDatabase(this.state.creationTime)} }>
           <Text>Delete From Database</Text>
         </Button>
@@ -727,7 +736,7 @@ _readyToParseRender = () =>
         </Body>
       </Header>
       <Content>
-      <Image source = {this.state.parseSource} style = {styles.imageStyle} resizeMode={"contain"}/>
+      <Image source = {this.state.parseSource} style = {styles.imageStyleFullScreen} resizeMode={"contain"}/>
       
       </Content>
       <Footer>
@@ -841,7 +850,7 @@ _imageParsedRender = () =>
     </Header>
     <Content>
       <View style={styles.boxedImage} >
-        <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
+        <Image backgroundColor="#5e5e5e" source={{uri: this.state.uri}} style = {styles.imageStyle} />
       </View>
       <Button full backgroundColor='#33ccff' 
       onPress={this._seperateWords}>
@@ -925,7 +934,7 @@ _parsedStringsCombiningRender = () =>
     </Header>
     <Content>
       <View style={styles.boxedImage} >
-        <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
+        <Image backgroundColor="#5e5e5e" source={{uri: this.state.uri}} style = {styles.imageStyle} />
       </View>
       <View style={{flexDirection:'row',justifyContent:'space-evenly'}}>
         <Button full backgroundColor='#33ccff' 
@@ -1095,7 +1104,7 @@ _uploadedRender = () =>
         </Body>
       </Header>
       <Content style={styles.singleDatabaseEntry}>
-        <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+        <Image backgroundColor="#5e5e5e" source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
         <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() =>{this._deleteFromDatabase(this.state.creationTime)} }>
           <Text>Delete From Database</Text>
         </Button>
@@ -1268,6 +1277,11 @@ const styles = StyleSheet.create({
   imageStyle: {
     width: Dimensions.get('window').width ,
     height: Dimensions.get('window').width * 9 / 16,
+    marginTop: 0,
+  },
+  imageStyleFullScreen: {
+    width: Dimensions.get('window').width ,
+    height: Dimensions.get('window').height-90,
     marginTop: 0,
   },
   touchableContainer: {

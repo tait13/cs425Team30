@@ -56,6 +56,7 @@ class HomeScreen extends React.Component {
       newName: '',
       newValue: '',
       newUnit: '',
+      uploaded: false,
     };
   }
 
@@ -382,7 +383,15 @@ _upload = () => {
                       },
                       body: data
                   })
-                  .then((response) => { return response.text();}).then((text) => {console.log(text); return text})
+                  .then((response) => { return response.json();}).then(
+                    (receivedData) => {
+                      console.log(receivedData);
+                      
+                      console.log(receivedData.Time);
+                      this._chooseFromDatabase({creationTime: receivedData.Time});
+                      this.setState({creationTime: receivedData.Time});
+                      return receivedData;
+                    })
                   .catch((error) => {
                       console.error(error);
                   });
@@ -472,10 +481,17 @@ _chooseFromDatabase = (item) => {
                     currentName: receivedData.Name,
                     currentLocation: receivedData.Location,
                     currentType: receivedData.Type,
-                    currentManufacturer: receivedData.Manufacturerm,
+                    currentManufacturer: receivedData.Manufacturer,
                     doneLoadingEntry: true,
                     
                 }, function(){});
+
+                if(this.state.JSONSaved)
+                {
+                  this.setState({
+                    uploaded: true,
+                  }, function(){});
+                }
                 console.log(this.state.parsedStrings);
               })
               .catch((error) => {
@@ -1041,7 +1057,58 @@ _saveEntryRender = () =>
   );
 }
 
+_uploadedRender = () =>
+{
+  return (
+    <Container>
+      <Header style={{ backgroundColor: '#33ccff' }}>
+        <Left>
+          <Button transparent onPress={this._reset}>
+            <Icon name='home' />
+            <Text> Home </Text>
+          </Button>
+        </Left>
+        <Body>
+        </Body>
+      </Header>
+      <Content style={styles.singleDatabaseEntry}>
+        <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+        <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() =>{this._deleteFromDatabase(this.state.creationTime)} }>
+          <Text>Delete From Database</Text>
+        </Button>
+        
+        <Text style={{marginHorizontal:15}}><Text style={{fontWeight: 'bold', fontSize:16}}>{this.state.currentName}{"\n"}</Text>
+        <Text style={{fontWeight: 'bold',}}>Location: </Text>{this.state.currentLocation}{"\n"}
+        <Text style={{fontWeight: 'bold',}}>Type: </Text>{this.state.currentType}{"\n"}
+        <Text style={{fontWeight: 'bold',}}>Manufacturer:</Text> {this.state.currentManufacturer}{"\n"}
+        <Text style={{fontWeight: 'bold',}}>Creation Time: </Text>{this.state.creationTime}
+          </Text>
+        <FlatList
+                  data={this.state.parsedStrings}
 
+                  renderItem={({item}) => <Text style={{fontWeight: 'bold', marginHorizontal:15,}}>{item.EntryName.Word}:<Text style={{fontWeight: '400'}}> {item.Value.Word} {item.Unit.Word}</Text></Text>}
+
+
+              />
+        {/* <View style={{flexDirection:"column", alignItems:"flex-start"}}>
+          <View >
+              <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+          </View>
+
+          <View style={styles.buttonContainer}>
+              <FlatList
+                  data={this.state.parsedStrings}
+
+                  renderItem={({item}) => <Text>{item.EntryName.Word}: {item.Value.Word} {item.Unit.Word}</Text>}
+
+
+              />
+          </View>
+        </View> */}
+      </Content>
+    </Container>
+  );
+}
 
 //Render call
   render() {
@@ -1109,7 +1176,15 @@ _saveEntryRender = () =>
             }
             else
             {
-              return this._saveEntryRender();
+              if(!this.state.uploaded)
+              {
+                return this._saveEntryRender();
+              }
+              else
+              {
+                return this._uploadedRender();
+              }
+              
             }
           }
             

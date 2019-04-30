@@ -24,6 +24,8 @@ import { Container, Root, Header, Title, Content, Footer, FooterTab, Button, Lef
 import fileType from 'react-native-file-type';
 
 
+
+
 class HomeScreen extends React.Component {
 
   static navigationOptions = {
@@ -41,6 +43,7 @@ class HomeScreen extends React.Component {
       postCalled: false,
       databaseLoaded: false,
       refresh: false,
+      refresh2: false,
       valuesSaved: false,
       names:[],
       values:[],
@@ -319,6 +322,8 @@ _saveJSON = () => {
     }
   }
 
+  console.log(this.state.names);
+
   if(allEntriesHaveValue)
   {
     var tmpJSONObj = [];
@@ -491,6 +496,7 @@ _chooseFromDatabase = (item) => {
                   this.setState({
                     uploaded: true,
                   }, function(){});
+                  Alert.alert("Upload Successful");
                 }
                 console.log(this.state.parsedStrings);
               })
@@ -530,13 +536,25 @@ _addNewEntry = () =>
 
     this._setModalVisible(false);
 
-    var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:this.state.values.length, unitIndex:this.state.units.length};
-    this.state.names.push(wordObj);
+    if(this.state.newUnit === "")
+    {
+      var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:this.state.values.length, unitIndex:-1};
+      this.state.names.push(wordObj);
 
-    wordObj = {Word:this.state.newValue, Bounds:null};
-    this.state.values.push(wordObj);
-    wordObj = {Word:this.state.newUnit, Bounds:null};
-    this.state.units.push(wordObj);
+      wordObj = {Word:this.state.newValue, Bounds:null};
+      this.state.values.push(wordObj);
+    }
+    else
+    {
+      var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:this.state.values.length, unitIndex:this.state.units.length};
+      this.state.names.push(wordObj);
+
+      wordObj = {Word:this.state.newValue, Bounds:null};
+      this.state.values.push(wordObj);
+      wordObj = {Word:this.state.newUnit, Bounds:null};
+      this.state.units.push(wordObj);
+    }
+    
 
     this.setState({
       newName: "",
@@ -544,6 +562,10 @@ _addNewEntry = () =>
       newUnit: "",
       refresh: !this.state.refresh,
     }, function(){});
+
+    console.log(this.state.names);
+    console.log(this.state.values);
+    console.log(this.state.units);
   }
     
 }
@@ -907,11 +929,11 @@ _parsedStringsCombiningRender = () =>
       </View>
       <View style={{flexDirection:'row',justifyContent:'space-evenly'}}>
         <Button full backgroundColor='#33ccff' 
-        onPress={() => this._setModalVisible(true)} style={{width:(Dimensions.get('window').width/2), marginRight:2}}>
+        onPress={() => this._setModalVisible(true)} style={{width:(Dimensions.get('window').width/2), margin:4, marginTop:0}}>
           <Text> Add New Entry </Text>
         </Button>
         <Button full  backgroundColor='#33ccff' 
-        onPress={this._saveJSON} style={{width:(Dimensions.get('window').width/2), marginLeft:2}}>
+        onPress={this._saveJSON} style={{width:(Dimensions.get('window').width/2), margin:4, marginTop:0}}>
           <Text> Next </Text>
         </Button>
         
@@ -920,7 +942,7 @@ _parsedStringsCombiningRender = () =>
         <FlatList
           data={this.state.names}
           extraData={this.state}
-          
+          key={this.state.refresh}
           renderItem={({item, index}) =>
                
           <Item style={{flex:1, flexDirection: 'row'}} regular>
@@ -944,6 +966,7 @@ _parsedStringsCombiningRender = () =>
                       this.setState({
                         refresh: !this.state.refresh,
                       });
+                      
                     }}>
               <Picker.Item label="Select a value" value={-1} />  
                 {
@@ -1245,7 +1268,7 @@ const styles = StyleSheet.create({
   imageStyle: {
     width: Dimensions.get('window').width ,
     height: Dimensions.get('window').width * 9 / 16,
-    marginTop: 5,
+    marginTop: 0,
   },
   touchableContainer: {
     

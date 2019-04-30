@@ -11,9 +11,10 @@
 
     list($width, $height, $type, $attr) = getimagesize($_POST["originalImageLoc"]); 
 
+    $creationTime = date("Y-m-d H:i:s");
     //Insert POST values into database
     $sql = "INSERT INTO Assets (creationTime, originalImageLoc, boxedImageLoc, Name, Type, Manufacturer, Location, imageWidth, imageHeight, AssetJSON) VALUES
-        ('".date("Y-m-d H:i:s")."', '"
+        ('".$creationTime."', '"
         .$_POST["originalImageLoc"]."', '"
         .$_POST["boxedImageLoc"]."', '"
         .$_POST["name"]."', '"
@@ -27,11 +28,13 @@
     //Check if successful    
     if($connection->query($sql) === TRUE)
     {
-        print "New Record Created";
+
+        echo('{"Status":"Success","Message":"Asset Uploaded To Database","Time":"' . $creationTime . '"}');
     }
     else
     {
-        print "Error: " . $sql . "<br>" . $connection->error;
+        // print "Error: " . $sql . "<br>" . $connection->error;
+        echo('{"Status":"Success","Message":"Failed to upload to database. '. $sql . '","Time":"' . $creationTime . '"}');
     }
 
 ?>

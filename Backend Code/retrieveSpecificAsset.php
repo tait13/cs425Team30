@@ -8,11 +8,8 @@
     {
         die("Connection failed:" . mysqli_connect_error());
     }
-    
-    //$_POST["creationTime"]
+
     //View All Assets
-    
-    // $result = $connection->query("SELECT * FROM Assets WHERE creationTime=" . '"2019-02-27 18:04:13"');
     $result = $connection->query('SELECT * FROM Assets WHERE creationTime="' . $_POST["creationTime"] . '"');
 
     //Store Output for JSON
@@ -25,18 +22,9 @@
         
         $fields = $result->fetch_fields();
         
-        // echo '<br>';
-        // echo $result->num_rows;
-        // echo '<br>';
-        
         //Retrieve each row
         while($row = $result->fetch_assoc())
         {
-        
-            // echo "creationTime: " . $row["creationTime"];
-            // echo " originalImageLoc: " . $row["originalImageLoc"];
-            // echo "boxedImageLoc: " . $row["boxedImageLoc"];
-            // echo " name: " . $row["name"];
             
             $output .= '"creationTime": "' . $row["creationTime"] . '",';
             $output .= ' "originalImageLoc": "' . $row["originalImageLoc"] . '",';

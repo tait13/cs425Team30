@@ -18,25 +18,17 @@
 
         $im = imagecreatefromstring(file_get_contents($path));
 
-        // if( $im !== false)
-        // {
-        //     // header('Content-Type: image/png');
-        //     // imagepng($im);
-        // }
         header('Content-Type: application/json');
 
         $config = ['credentials' => 'cs425-9bcc7a946012.json',    
                 ];
         
-        //$context = ['languageHints' => 'en'];
         $imageAnnotator = new ImageAnnotatorClient($config);
         
         #annotate the image
         $response = $imageAnnotator->textDetection($path);
 
         $texts = $response->getTextAnnotations();
-
-        // printf('%d texts found:' . PHP_EOL, count($texts));
         
         $yellow = imagecolorallocate($im, 255, 255, 0);
         imagesetthickness ( $im, 10 );
@@ -66,18 +58,7 @@
          $savePath = 'serialBoxed.png';
         $output = rtrim($output, ',');
         //Convert image into byte stream to export to html
-        //ob_start();
         imagepng($im, $savePath);
-        //$imStream = ob_get_clean();
-        //$src = 'data:image/png;base64,'.base64_encode($imStream);
-        
-       
-        
-        //file_put_contents($savePath, base64_encode($imStream));
-        
-        
-        //echo '<img src="' .$src .'" height=250/>';
-        //echo '<br>';
         
         //echo output as json object
         $output = $output . "],";

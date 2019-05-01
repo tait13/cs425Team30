@@ -731,6 +731,7 @@ _singleDatabaseEntryRender = () =>
 _readyToParseRender = () =>
 {
   //Renders screen to view selected image and parse
+ 
   return (
     <Container>
       <Header style={{ backgroundColor: '#33ccff' }}>

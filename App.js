@@ -206,7 +206,20 @@ _sendImageToOCR = () =>{
         })
         .then((response) => {
           console.log(response);
-          return response.json();
+          // return response.json();
+            // try{
+            //   let res= JSON.parse(response);
+            //   if(res && res.error)
+            //   {
+            //     throw new Error(res.error);
+                
+            //   }
+              return response.json();
+            // }
+            // catch(err)
+            // {
+            //   return response.text()
+            // }
           })
         .then((receivedData) => {
             console.log(data);
@@ -239,6 +252,7 @@ _sendImageToOCR = () =>{
             }
             else
             {
+              console.log(receivedData);
               Alert.alert("Error", receivedData.Message, [{text: 'OK', onPress:() => {this._reset()}}]);
             }
             
@@ -910,7 +924,7 @@ _imageParsedRender = () =>
                       });
                     }}>
               <Picker.Item label="Select a type" value={-1} />  
-              <Picker.Item label="Name" value={1} />
+              <Picker.Item label="Label" value={1} />
               <Picker.Item label="Value" value={2} />
               <Picker.Item label="Unit" value={3} />
             </Picker>
@@ -975,10 +989,16 @@ _parsedStringsCombiningRender = () =>
         
       </View>
       <View style={styles.buttonContainer}>
+      <View style={{flexDirection:'row', justifyContent:'space-evenly'}}>
+        <Text>Label</Text>
+        <Text>Value</Text>
+        <Text>Unit</Text>
+      </View>
         <FlatList
           data={this.state.names}
           extraData={this.state}
           key={this.state.refresh}
+          style={{marginBottom:500}}
           renderItem={({item, index}) =>
                
           <Item style={{flex:1, flexDirection: 'row'}} regular>

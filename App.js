@@ -271,6 +271,7 @@ _reset = () => {
           postCalled: false,
           databaseLoaded: false,
           refresh: false,
+          refresh2: false,
           loadedSingleObject: false,
           valuesSaved: false,
           names: [],
@@ -284,6 +285,11 @@ _reset = () => {
           Manufacturer: '',
           Location: '',
           retrievedData: [],
+          addNewModalVisible: false,
+          newName: '',
+          newUnit: '',
+          newValue: '',
+          uploaded: false,
           
       });
 

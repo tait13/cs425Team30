@@ -449,10 +449,18 @@ _deleteFromDatabase = (item) => {
             this._database();
 
             console.log(text);
-            this.setState({
-              doneLoadingEntry: false,
-              loadedSingleObject: false,
-            }, function(){});
+            if(!this.state.uploaded)
+            {
+              this.setState({
+                doneLoadingEntry: false,
+                loadedSingleObject: false,
+              }, function(){});
+            }
+            else
+            {
+              this._reset();
+            }
+            
 
             
             

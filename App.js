@@ -20,7 +20,30 @@ import {
   } from 'react-native';
 import { createStackNavigator, createAppContainer } from "react-navigation";
 import ImagePicker from 'react-native-image-picker';
-import { Container, Root, Header, Title, Content, Footer, FooterTab, Button, Left, Right, Body, Icon, Item, Input, Picker, Form, Segment, Thumbnail, Card, CardItem, Toast } from 'native-base';
+import { 
+  Container,
+  Root,
+  Header,
+  Title,
+  Content,
+  Footer,
+  FooterTab,
+  Button,
+  Left,
+  Right,
+  Body,
+  Icon,
+  Item,
+  Input,
+  Picker,
+  Form,
+  Segment,
+  Thumbnail,
+  Card,
+  CardItem,
+  Toast 
+  } from 'native-base';
+
 import fileType from 'react-native-file-type';
 
 
@@ -63,7 +86,7 @@ class HomeScreen extends React.Component {
     };
   }
 
-//Manages Camera
+//Allows Application to access android camera
   _cameraButton = () =>{
     const options = {
       title: 'Select Image',
@@ -85,9 +108,6 @@ class HomeScreen extends React.Component {
       } else {
         const source = { uri: response.uri, type: response.type};
 
-        // You can also display the image using data:
-        // const source = { uri: 'data:image/jpeg;base64,' + response.data };
-
         this.setState({
           parseSource: source,
           imageSelected: true,
@@ -98,7 +118,7 @@ class HomeScreen extends React.Component {
 
   }
 
-  //Manages Gallery Access
+  //Allows application to access the gallery of the device
   _galleryButton = () =>{
     
       const options = {
@@ -120,17 +140,14 @@ class HomeScreen extends React.Component {
           console.log('User tapped custom button: ', response.customButton);
         } else {
           const source = { uri: response.uri, type: response.type};
-
-          // You can also display the image using data:
-          // const source = { uri: 'data:image/jpeg;base64,' + response.data };
           
           this.setState({
             parseSource: source,
             imageSelected: true,
+            imageHeight: response.height,
+            imageWidth: response.width,
           });
           console.log(source);
-          // console.log(this.state.parseSource.type);
-          // console.log(response.type);
 
           if(this.state.parseSource.type === null)
           {
@@ -194,7 +211,9 @@ _sendImageToOCR = () =>{
         data.append('photo', {uri: this.state.parseSource.uri, type: this.state.parseSource.type, name:'testPhoto',});
         data.append('imageLoc', 'serial.png');
 
-        return fetch('https://cs425.alextait.net/docuTest.php', {
+        //HTTP POST Call to https://cs425.alextait.net/docuParse.php
+        //Returns json of all parsed words
+        return fetch('https://cs425.alextait.net/docuParse.php', {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
@@ -203,15 +222,18 @@ _sendImageToOCR = () =>{
             body: data
         })
         .then((response) => {
+
           console.log(response);
           return response.json();
+            
           })
         .then((receivedData) => {
-            console.log(data);
 
+            console.log(data);
             console.log(this.state.notParsed);
             console.log(receivedData);
 
+            //Checks if json response returns success code
             if(receivedData.Status === "Success")
             {
               this.setState({
@@ -232,11 +254,11 @@ _sendImageToOCR = () =>{
                 var wordObj = {Word:this.state.parsedStrings[wordIndex].Word, Bounds:this.state.parsedStrings[wordIndex].Bounds};
                 this.state.wordObjArray.push(wordObj);
                 this.state.parsedStrings[wordIndex].type = -1;
-
               }
             }
             else
             {
+              console.log(receivedData);
               Alert.alert("Error", receivedData.Message, [{text: 'OK', onPress:() => {this._reset()}}]);
             }
             
@@ -246,7 +268,7 @@ _sendImageToOCR = () =>{
         });
     }
 
-//Sets state back to home
+//Sets state back to home screen
 _reset = () => {
       this.setState({
           imageSelected: false,
@@ -255,6 +277,7 @@ _reset = () => {
           postCalled: false,
           databaseLoaded: false,
           refresh: false,
+          refresh2: false,
           loadedSingleObject: false,
           valuesSaved: false,
           names: [],
@@ -268,13 +291,17 @@ _reset = () => {
           Manufacturer: '',
           Location: '',
           retrievedData: [],
+          addNewModalVisible: false,
+          newName: '',
+          newUnit: '',
+          newValue: '',
+          uploaded: false,
           
       });
 
-
 }
 
-//Accesses database to view every upload asset
+//Accesses database to view every uploaded asset
 _database = () => {
       this.setState({
           databaseLoaded: true,
@@ -282,6 +309,8 @@ _database = () => {
       var data = new FormData();
       data.append('Total', 25);
 
+      //Http POST request to https://cs425.alextait.net/retrieveAssets.php
+      //Returns JSON with all entries in the database, minus their AssetJSON column
       return fetch('https://cs425.alextait.net/retrieveAssets.php', {
           method: 'POST',
           headers: {
@@ -312,6 +341,7 @@ _database = () => {
 //Adds each formatted value to a json string to be passed to database
 _saveJSON = () => {
 
+  //Error checking to make sure all entries have a corresponding value word
   var allEntriesHaveValue = true;
 
   for(entryIndex = 0; entryIndex < this.state.names.length; entryIndex++)
@@ -380,6 +410,8 @@ _upload = () => {
 
       console.log(data);
 
+      //Http POST call to databaseUpload.php
+      //Sends all asset data to the database.
       return fetch('https://cs425.alextait.net/databaseUpload.php', {
                       method: 'POST',
                       headers: {
@@ -413,6 +445,8 @@ _deleteFromDatabase = (item) => {
           var data = new FormData();
           data.append('creationTime', this.state.creationTime);
 
+          //Http POST call to deleteEntry.php
+          //Deletes the sent asset from the database.
           return fetch('https://cs425.alextait.net/deleteEntry.php', {
               method: 'POST',
               headers: {
@@ -427,13 +461,17 @@ _deleteFromDatabase = (item) => {
             this._database();
 
             console.log(text);
-            this.setState({
-              doneLoadingEntry: false,
-              loadedSingleObject: false,
-            }, function(){});
-
-            
-            
+            if(!this.state.uploaded)
+            {
+              this.setState({
+                doneLoadingEntry: false,
+                loadedSingleObject: false,
+              }, function(){});
+            }
+            else
+            {
+              this._reset();
+            }
 
             return text;
           })
@@ -458,6 +496,8 @@ _chooseFromDatabase = (item) => {
               var data = new FormData();
               data.append('creationTime', item.creationTime);
 
+              //Http POST call to retrieveSpecificAsset.php
+              //Retrieves the detailed data from a Specific Asset
               return fetch('https://cs425.alextait.net/retrieveSpecificAsset.php', {
                   method: 'POST',
                   headers: {
@@ -487,6 +527,8 @@ _chooseFromDatabase = (item) => {
                     currentLocation: receivedData.Location,
                     currentType: receivedData.Type,
                     currentManufacturer: receivedData.Manufacturer,
+                    imageHeight: receivedData.imageHeight,
+                    imageWidth: receivedData.imageWidth,
                     doneLoadingEntry: true,
                     
                 }, function(){});
@@ -505,7 +547,7 @@ _chooseFromDatabase = (item) => {
               });
 }
 
-//Changes state of modal visible
+//Changes state of modal visible to display Add New Entry Modal
 _setModalVisible = (newState) =>
 {
   this.setState({
@@ -519,30 +561,39 @@ _setModalVisible = (newState) =>
 //Adds a new name value and unit based on text entered into modal
 _addNewEntry = () =>
 {
-  if(this.state.newName ==="" && this.state.newValue ==="")
-  {
-    Alert.alert('No text for Name or Value Entered');
-  }
-  else if(this.state.newName ==="")
+  if(this.state.newName ==="")
   {
     Alert.alert('No text for Name Entered');
-  }
-  else if(this.state.newValue ==="")
-  {
-    Alert.alert('No text for Value Entered');
   }
   else
   {
 
     this._setModalVisible(false);
 
-    if(this.state.newUnit === "")
+    if(this.state.newUnit === "" && this.state.newValue === "")
+    {
+      var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:-1, unitIndex:-1};
+      this.state.names.push(wordObj);
+
+      wordObj = {Word:this.state.newValue, Bounds:null};
+      this.state.values.push(wordObj);
+    }
+    else if(this.state.newUnit === "")
     {
       var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:this.state.values.length, unitIndex:-1};
       this.state.names.push(wordObj);
 
       wordObj = {Word:this.state.newValue, Bounds:null};
       this.state.values.push(wordObj);
+    }
+    else if(this.state.newValue === "")
+    {
+      var wordObj = {Word:this.state.newName, Bounds:null, valueIndex:-1, unitIndex:this.state.units.length};
+      this.state.names.push(wordObj);
+      wordObj = {Word:this.state.newValue, Bounds:null};
+      this.state.values.push(wordObj);
+      wordObj = {Word:this.state.newUnit, Bounds:null};
+      this.state.units.push(wordObj);
     }
     else
     {
@@ -592,11 +643,6 @@ _homeScreenRender = () =>
             <Icon name="cloud"/>
             <Text style={{fontWeight:'bold'}}>  Previous Uploads</Text>
           </Button>
-          {/* <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() => this._setModalVisible(true)}>
-            <Text>  Test</Text>
-          </Button> */}
-
-          
         
       </View>
     </View>
@@ -652,6 +698,7 @@ _databaseViewRender = () =>
 
 _singleDatabaseEntryRender = () => 
 {
+  //Renders a single entry and all its' corresponding data to the screen. 
   return (
     <Container>
       <Header style={{ backgroundColor: '#33ccff' }}>
@@ -672,7 +719,12 @@ _singleDatabaseEntryRender = () =>
         </Body>
       </Header>
       <Content style={styles.singleDatabaseEntry}>
-        <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+        <Image backgroundColor="#5e5e5e" source={{uri: this.state.boxedImageLoc}} style = {{
+            width: Dimensions.get('window').width ,
+            height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+            marginTop: 0,
+        }}
+        resizeMode = "contain"/>
         <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() =>{this._deleteFromDatabase(this.state.creationTime)} }>
           <Text>Delete From Database</Text>
         </Button>
@@ -690,21 +742,6 @@ _singleDatabaseEntryRender = () =>
 
 
               />
-        {/* <View style={{flexDirection:"column", alignItems:"flex-start"}}>
-          <View >
-              <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
-          </View>
-
-          <View style={styles.buttonContainer}>
-              <FlatList
-                  data={this.state.parsedStrings}
-
-                  renderItem={({item}) => <Text>{item.EntryName.Word}: {item.Value.Word} {item.Unit.Word}</Text>}
-
-
-              />
-          </View>
-        </View> */}
       </Content>
     </Container>
   );
@@ -713,6 +750,7 @@ _singleDatabaseEntryRender = () =>
 _readyToParseRender = () =>
 {
   //Renders screen to view selected image and parse
+ 
   return (
     <Container>
       <Header style={{ backgroundColor: '#33ccff' }}>
@@ -727,7 +765,11 @@ _readyToParseRender = () =>
         </Body>
       </Header>
       <Content>
-      <Image source = {this.state.parseSource} style = {styles.imageStyle} resizeMode={"contain"}/>
+      <Image source = {this.state.parseSource} style = {{
+        width: Dimensions.get('window').width ,
+        height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+        marginTop: 0,
+    }} resizeMode={"contain"}/>
       
       </Content>
       <Footer>
@@ -740,6 +782,7 @@ _readyToParseRender = () =>
     </Container>  
   );
 }
+
 
 _waitingOnParseRender = () => 
 {
@@ -757,7 +800,12 @@ _waitingOnParseRender = () =>
         
       </Body>
     </Header>
-     <Image source = {this.state.parseSource} style = {styles.imageStyle} resizeMode={"contain"}/>
+     <Image source = {this.state.parseSource} style = {{
+          width: Dimensions.get('window').width ,
+          height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+          marginTop: 0,
+      }} 
+    resizeMode={"contain"}/>
 
       <View style={styles.container2}>
           <View style={styles.buttonContainer}>
@@ -768,9 +816,10 @@ _waitingOnParseRender = () =>
   );
 }
 
+//Displays an activity indicator in the center of the screen
 _genericLoadingRender = () => 
 {
-  //Displays an activity indicator in the center of the screen
+  
   return (
     <View style={styles.container3}>
     <Header style={{ backgroundColor: '#33ccff' }}>
@@ -841,7 +890,11 @@ _imageParsedRender = () =>
     </Header>
     <Content>
       <View style={styles.boxedImage} >
-        <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
+        <Image backgroundColor="#5e5e5e" source={{uri: this.state.uri}} style = {{
+          width: Dimensions.get('window').width ,
+          height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+          marginTop: 0,
+        }} />
       </View>
       <Button full backgroundColor='#33ccff' 
       onPress={this._seperateWords}>
@@ -858,10 +911,8 @@ _imageParsedRender = () =>
           <Input 
             onChangeText={(text) => {
               item.Word = text;
-              // this.state.wordObjArray[index].Word = text;
               this.setState({
                   refresh: !this.state.refresh,
-                  //currentJSON: JSON.stringify(this.state.parsedStrings)
                   }); 
               console.log(item.Word);
               console.log(this.state.parsedStrings.length);
@@ -878,7 +929,7 @@ _imageParsedRender = () =>
                       });
                     }}>
               <Picker.Item label="Select a type" value={-1} />  
-              <Picker.Item label="Name" value={1} />
+              <Picker.Item label="Label" value={1} />
               <Picker.Item label="Value" value={2} />
               <Picker.Item label="Unit" value={3} />
             </Picker>
@@ -925,7 +976,11 @@ _parsedStringsCombiningRender = () =>
     </Header>
     <Content>
       <View style={styles.boxedImage} >
-        <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
+        <Image backgroundColor="#5e5e5e" source={{uri: this.state.uri}} style = {{
+            width: Dimensions.get('window').width ,
+            height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+            marginTop: 0,
+        }} />
       </View>
       <View style={{flexDirection:'row',justifyContent:'space-evenly'}}>
         <Button full backgroundColor='#33ccff' 
@@ -939,20 +994,24 @@ _parsedStringsCombiningRender = () =>
         
       </View>
       <View style={styles.buttonContainer}>
+      <View style={{flexDirection:'row', justifyContent:'space-evenly'}}>
+        <Text>Label</Text>
+        <Text>Value</Text>
+        <Text>Unit</Text>
+      </View>
         <FlatList
           data={this.state.names}
           extraData={this.state}
           key={this.state.refresh}
+          style={{marginBottom:500}}
           renderItem={({item, index}) =>
                
           <Item style={{flex:1, flexDirection: 'row'}} regular>
           <Input style={{flex:1}}
             onChangeText={(text) => {
               item.Word = text;
-              // this.state.wordObjArray[index].Word = text;
               this.setState({
                   refresh: !this.state.refresh,
-                  //currentJSON: JSON.stringify(this.state.parsedStrings)
                   }); 
               console.log(item.Word);
               console.log(this.state.names.length);
@@ -1023,6 +1082,7 @@ _parsedStringsCombiningRender = () =>
   );
 }
 
+//Rendered screen for saving an entry to the database
 _saveEntryRender = () =>
 {
   return (
@@ -1041,7 +1101,11 @@ _saveEntryRender = () =>
     </Header>
     <Content>
       <View style={styles.boxedImage} >
-        <Image source={{uri: this.state.uri}} style = {styles.imageStyle} />
+        <Image source={{uri: this.state.uri}} style = {{
+          width: Dimensions.get('window').width ,
+          height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+          marginTop: 0,
+        }} />
       </View>
       <Button full backgroundColor='#33ccff' 
       onPress={this._upload}>
@@ -1063,6 +1127,7 @@ _saveEntryRender = () =>
           <Picker.Item label="Generator" value={"Generator"}/>
           <Picker.Item label="Chiller" value={"Chiller"}/>
           <Picker.Item label="Compressor" value={"Compressor"}/>
+          <Picker.Item label="Transformer" value={"Transformer"}/>
         </Picker>
       </Item>
       <Item >
@@ -1080,6 +1145,7 @@ _saveEntryRender = () =>
   );
 }
 
+//Rendered screen to display after uploading an entry to the database
 _uploadedRender = () =>
 {
   return (
@@ -1095,7 +1161,11 @@ _uploadedRender = () =>
         </Body>
       </Header>
       <Content style={styles.singleDatabaseEntry}>
-        <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
+        <Image backgroundColor="#5e5e5e" source={{uri: this.state.boxedImageLoc}} style = {{
+        width: Dimensions.get('window').width ,
+        height: Dimensions.get('window').width * this.state.imageHeight / this.state.imageWidth,
+        marginTop: 0,
+    }} resizeMode = "contain"/>
         <Button iconLeft block backgroundColor="#33ccff" style = {{marginBottom: 2}} onPress={() =>{this._deleteFromDatabase(this.state.creationTime)} }>
           <Text>Delete From Database</Text>
         </Button>
@@ -1113,27 +1183,12 @@ _uploadedRender = () =>
 
 
               />
-        {/* <View style={{flexDirection:"column", alignItems:"flex-start"}}>
-          <View >
-              <Image source={{uri: this.state.boxedImageLoc}} style = {styles.imageStyle} resizeMode = "contain"/>
-          </View>
-
-          <View style={styles.buttonContainer}>
-              <FlatList
-                  data={this.state.parsedStrings}
-
-                  renderItem={({item}) => <Text>{item.EntryName.Word}: {item.Value.Word} {item.Unit.Word}</Text>}
-
-
-              />
-          </View>
-        </View> */}
       </Content>
     </Container>
   );
 }
 
-//Render call
+//Render Call for React-Native which renders whatever is returned
   render() {
 
     //Check permissions
@@ -1216,6 +1271,7 @@ _uploadedRender = () =>
   }
 }
 
+
 const AppNavigator = createStackNavigator({
   Home: {screen: HomeScreen},
 });
@@ -1223,7 +1279,7 @@ const AppNavigator = createStackNavigator({
 export default (createAppContainer(AppNavigator));
 
 
-
+//Style Sheet for application
 const styles = StyleSheet.create({
   text1: {
     fontSize: 24,
@@ -1268,6 +1324,11 @@ const styles = StyleSheet.create({
   imageStyle: {
     width: Dimensions.get('window').width ,
     height: Dimensions.get('window').width * 9 / 16,
+    marginTop: 0,
+  },
+  imageStyleFullScreen: {
+    width: Dimensions.get('window').width ,
+    height: Dimensions.get('window').height-90,
     marginTop: 0,
   },
   touchableContainer: {
